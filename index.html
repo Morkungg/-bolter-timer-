@@ -190,7 +190,7 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap: 12px;
+    gap: 14px;
     transition: box-shadow .3s, border-color .3s, background .3s;
   }
 
@@ -274,42 +274,7 @@
     padding:0;
   }
   .btn-icon.btn-edit:hover{ border-color: var(--p1); color: var(--p1); }
-  .btn-icon.btn-img:hover{ border-color: var(--p1); color: var(--p1); }
   .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
-
-  .img-box{
-    width: 100%;
-    height: 130px;
-    border: 1px dashed var(--line);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .img-box img{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .img-box .no-img{
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted-2);
-    text-align: center;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .img-box .no-img:hover{
-    color: var(--p1);
-    background: rgba(63,214,200,0.05);
-  }
 
   .name-edit-input{
     width: 100%;
@@ -328,14 +293,14 @@
 
   .ring-wrap{
     position: relative;
-    width: 150px; height: 150px;
+    width: 160px; height: 160px;
     display:flex; align-items:center; justify-content:center;
   }
-  svg.ring{ transform: rotate(-90deg); width:150px; height:150px; }
-  .ring-track{ fill:none; stroke: var(--line); stroke-width: 7; }
+  svg.ring{ transform: rotate(-90deg); width:160px; height:160px; }
+  .ring-track{ fill:none; stroke: var(--line); stroke-width: 8; }
   .ring-progress{
     fill:none;
-    stroke-width: 7;
+    stroke-width: 8;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.4s linear, stroke .3s;
   }
@@ -345,53 +310,23 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-    gap: 2px;
+    gap: 3px;
   }
   .digits{
     font-family: var(--font-mono);
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
     letter-spacing: 1px;
     font-variant-numeric: tabular-nums;
   }
   .phase-label{
     font-family: var(--font-mono);
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 1.2px;
     color: var(--muted);
     text-transform: uppercase;
     text-align:center;
-    max-width: 110px;
-  }
-
-  /* ปุ่มบวก/ลบเวลาเพิ่มเติม */
-  .time-adjust-bar {
-    display: flex;
-    gap: 4px;
-    width: 100%;
-    justify-content: center;
-  }
-  .btn-adj {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 700;
-    padding: 5px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all .15s;
-    flex: 1;
-    text-align: center;
-  }
-  .btn-adj:hover {
-    border-color: var(--p1);
-    color: var(--p1);
-    background: rgba(63,214,200,0.08);
-  }
-  .btn-adj:active {
-    transform: scale(0.95);
+    max-width: 120px;
   }
 
   .status-line{
@@ -406,30 +341,68 @@
   .card[data-state="phase2"] .status-line{ color: var(--p2); }
   .card.alerting .status-line{ color: var(--alert); font-weight:700; }
 
+  /* กล่องปุ่มควบคุมและปรับเวลา */
   .card-actions{
     width:100%;
     display:flex;
+    flex-direction: column;
     gap: 8px;
   }
 
+  .time-adjust-bar {
+    display: flex;
+    gap: 5px;
+    width: 100%;
+  }
+  .btn-adj {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .15s;
+    flex: 1;
+    text-align: center;
+  }
+  .btn-adj:hover {
+    border-color: var(--p2);
+    color: var(--p2);
+    background: rgba(245,166,35,0.08);
+  }
+  .btn-adj:active {
+    transform: scale(0.95);
+  }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
   .btn{
-    flex:1;
+    flex: 1;
     font-family: var(--font-mono);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
-    padding: 10px 10px;
+    padding: 11px 10px;
     border-radius: 4px;
-    cursor:pointer;
+    cursor: pointer;
     border: none;
     transition: transform .12s, filter .12s;
+    text-align: center;
   }
   .btn:active{ transform: scale(.96); }
 
   .btn-start{
     background: var(--p1);
     color: #06110e;
+    width: 100%;
   }
   .btn-start:hover{ filter: brightness(1.12); }
 
@@ -458,7 +431,7 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      ระบบจับเวลาวนลูปพร้อมปุ่มปรับทดเวลาด่วนหน้างาน รองรับการบันทึกภาพจุดจก
+      ระบบจับเวลาวนลูปอัตโนมัติ พร้อมปุ่มปรับทดเวลาด่วนหน้าจอ
     </div>
   </header>
 
@@ -467,7 +440,6 @@
     <button class="btn-add" id="addPointBtn">+ เพิ่มจุด</button>
   </div>
 
-  <input type="file" id="fileInput" accept="image/*" style="display:none;" />
   <div class="grid" id="pointsGrid"></div>
 
   <footer>BOLTER-TIMER &middot; ข้อมูลบันทึกในเครื่องนี้เท่านั้น (LocalStorage)</footer>
@@ -480,17 +452,15 @@
   const PHASE1_DURATION = (5 * 60 + 30) * 1000;
   const PHASE2_DURATION = (8 * 60 + 30) * 1000;
   const ALERT_THRESHOLD = 30 * 1000;
-  const STORAGE_KEY = "bolterLoopPoints_v10";
+  const STORAGE_KEY = "bolterLoopPoints_v11";
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
   const addBtn = document.getElementById("addPointBtn");
-  const fileInput = document.getElementById("fileInput");
   const DEFAULT_TITLE = document.title;
 
   let points = [];
   let editingId = null;
-  let targetImgId = null;
 
   function ensureNotifyPermission(){
     if("Notification" in window && Notification.permission === "default"){
@@ -559,7 +529,6 @@
     points.push({
       id: uid(),
       name: name,
-      image: null,
       state: "idle",
       endTime: null,
       alertPlaying: false
@@ -668,7 +637,7 @@
     return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
   }
 
-  const RADIUS = 65;
+  const RADIUS = 68;
   const CIRC = 2 * Math.PI * RADIUS;
 
   function cardTemplate(p){
@@ -677,29 +646,23 @@
       ? `<input type="text" class="name-edit-input" value="${escapeHtml(p.name)}" maxlength="40" />`
       : `<div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>`;
 
-    const imgHtml = p.image 
-      ? `<img src="${p.image}" />` 
-      : `<div class="no-img" data-action="upload-img" data-id="${p.id}">+ คลิกเพื่อใส่รูปจุด</div>`;
-
     return `
       <div class="corner-bl"></div>
       <div class="corner-br"></div>
       <div class="card-top">
         <div style="flex:1; min-width:0;">
           ${titleHtml}
-          <div class="point-config">วนลูปจับเวลาอัตโนมัติ</div>
+          <div class="point-config">วนลูปอัตโนมัติ</div>
         </div>
         <div class="card-top-actions">
-          <button class="btn-icon btn-img" data-action="upload-img" data-id="${p.id}" title="เปลี่ยนรูปภาพ">📷</button>
           <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ">✎</button>
           <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้">✕</button>
         </div>
       </div>
-      <div class="img-box">${imgHtml}</div>
       <div class="ring-wrap">
-        <svg class="ring" viewBox="0 0 150 150">
-          <circle class="ring-track" cx="75" cy="75" r="${RADIUS}"></circle>
-          <circle class="ring-progress" data-role="ring" cx="75" cy="75" r="${RADIUS}"
+        <svg class="ring" viewBox="0 0 160 160">
+          <circle class="ring-track" cx="80" cy="80" r="${RADIUS}"></circle>
+          <circle class="ring-progress" data-role="ring" cx="80" cy="80" r="${RADIUS}"
             stroke-dasharray="${CIRC}" stroke-dashoffset="0"></circle>
         </svg>
         <div class="ring-center">
@@ -707,7 +670,6 @@
           <div class="phase-label" data-role="phaselabel">รอเริ่ม</div>
         </div>
       </div>
-      <div class="time-adjust-bar" data-role="adjustBar"></div>
       <div class="status-line" data-role="status">&nbsp;</div>
       <div class="card-actions" data-role="actions"></div>
     `;
@@ -759,7 +721,6 @@
     const statusEl = el.querySelector('[data-role="status"]');
     const ringEl = el.querySelector('[data-role="ring"]');
     const actionsEl = el.querySelector('[data-role="actions"]');
-    const adjustBarEl = el.querySelector('[data-role="adjustBar"]');
 
     const now = Date.now();
     let remaining, total, ringColor, phaseText, statusText = "";
@@ -810,22 +771,19 @@
     ringEl.style.stroke = ringColor;
     ringEl.style.strokeDashoffset = offset;
 
-    // แสดงปุ่มบวก/ลบเวลาเฉพาะตอนที่กดเริ่มจับเวลาแล้วเท่านั้น
-    if(p.state !== "idle"){
-      adjustBarEl.innerHTML = `
-        <button class="btn-adj" data-action="adjust" data-ms="-60000" data-id="${p.id}" title="ลดเวลา 1 นาที">-1m</button>
-        <button class="btn-adj" data-action="adjust" data-ms="-30000" data-id="${p.id}" title="ลดเวลา 30 วิ">-30s</button>
-        <button class="btn-adj" data-action="adjust" data-ms="30000" data-id="${p.id}" title="เพิ่มเวลา 30 วิ">+30s</button>
-        <button class="btn-adj" data-action="adjust" data-ms="60000" data-id="${p.id}" title="เพิ่มเวลา 1 นาที">+1m</button>
-      `;
-    } else {
-      adjustBarEl.innerHTML = "";
-    }
-
+    // สร้างปุ่มควบคุมตามสถานะการทำงาน
     if(p.state === "idle"){
       actionsEl.innerHTML = `<button class="btn btn-start" data-action="start" data-id="${p.id}">เริ่มจับเวลา</button>`;
     } else {
-      actionsEl.innerHTML = `<button class="btn btn-reset" data-action="reset" data-id="${p.id}">หยุด / รีเซ็ต</button>`;
+      actionsEl.innerHTML = `
+        <div class="time-adjust-bar">
+          <button class="btn-adj" data-action="adjust" data-ms="-60000" data-id="${p.id}" title="ลด 1 นาที">-1m</button>
+          <button class="btn-adj" data-action="adjust" data-ms="-30000" data-id="${p.id}" title="ลด 30 วิ">-30s</button>
+          <button class="btn-adj" data-action="adjust" data-ms="30000" data-id="${p.id}" title="เพิ่ม 30 วิ">+30s</button>
+          <button class="btn-adj" data-action="adjust" data-ms="60000" data-id="${p.id}" title="เพิ่ม 1 นาที">+1m</button>
+        </div>
+        <button class="btn btn-reset" data-action="reset" data-id="${p.id}">หยุด / รีเซ็ต</button>
+      `;
     }
   }
 
@@ -842,28 +800,6 @@
       const ms = parseInt(btn.dataset.ms, 10);
       adjustTime(id, ms);
     }
-    else if(action === "upload-img"){
-      targetImgId = id;
-      fileInput.click();
-    }
-  });
-
-  fileInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if(!file || !targetImgId) return;
-
-    const reader = new FileReader();
-    reader.onload = function(evt){
-      const p = points.find(x => x.id === targetImgId);
-      if(p){
-        p.image = evt.target.result;
-        save();
-        render(true);
-      }
-      fileInput.value = "";
-      targetImgId = null;
-    };
-    reader.readAsDataURL(file);
   });
 
   addBtn.addEventListener("click", () => {
