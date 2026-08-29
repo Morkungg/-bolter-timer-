@@ -274,7 +274,42 @@
     padding:0;
   }
   .btn-icon.btn-edit:hover{ border-color: var(--p1); color: var(--p1); }
+  .btn-icon.btn-img:hover{ border-color: var(--p1); color: var(--p1); }
   .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
+
+  .img-box{
+    width: 100%;
+    height: 140px;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .img-box img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .img-box .no-img{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted-2);
+    text-align: center;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .img-box .no-img:hover{
+    color: var(--p1);
+    background: rgba(63,214,200,0.05);
+  }
 
   .name-edit-input{
     width: 100%;
@@ -327,6 +362,34 @@
     text-transform: uppercase;
     text-align:center;
     max-width: 120px;
+  }
+
+  .time-adjust-bar {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    justify-content: center;
+  }
+  .btn-adj {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+    flex: 1;
+  }
+  .btn-adj:hover {
+    border-color: var(--p2);
+    color: var(--p2);
+    background: rgba(245,166,35,0.08);
+  }
+  .btn-adj:active {
+    transform: scale(0.95);
   }
 
   .status-line{
@@ -394,7 +457,7 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      ระบบ Auto Loop: กดเริ่มครั้งเดียว ระบบจะนับถอยหลังลูปคูลดาวน์ (5:30m) + รอเกิด (8:30m) ต่อเนื่องให้อัตโนมัติ
+      สามารถใส่รูปภาพจุดจกเพื่อกันลืมได้ อัปโหลดแล้วระบบจะบันทึกรูปไว้ให้อัตโนมัติ
     </div>
   </header>
 
@@ -403,6 +466,7 @@
     <button class="btn-add" id="addPointBtn">+ เพิ่มจุด</button>
   </div>
 
+  <input type="file" id="fileInput" accept="image/*" style="display:none;" />
   <div class="grid" id="pointsGrid"></div>
 
   <footer>BOLTER-TIMER &middot; ข้อมูลบันทึกในเครื่องนี้เท่านั้น (LocalStorage)</footer>
@@ -415,15 +479,17 @@
   const PHASE1_DURATION = (5 * 60 + 30) * 1000;
   const PHASE2_DURATION = (8 * 60 + 30) * 1000;
   const ALERT_THRESHOLD = 30 * 1000;
-  const STORAGE_KEY = "bolterLoopPoints_v8";
+  const STORAGE_KEY = "bolterLoopPoints_v9";
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
   const addBtn = document.getElementById("addPointBtn");
+  const fileInput = document.getElementById("fileInput");
   const DEFAULT_TITLE = document.title;
 
   let points = [];
   let editingId = null;
+  let targetImgId = null;
 
   function ensureNotifyPermission(){
     if("Notification" in window && Notification.permission === "default"){
@@ -492,6 +558,7 @@
     points.push({
       id: uid(),
       name: name,
+      image: null,
       state: "idle",
       endTime: null,
       alertPlaying: false
@@ -525,6 +592,14 @@
     p.state = "idle";
     p.endTime = null;
     p.alertPlaying = false;
+    save();
+    render();
+  }
+
+  function adjustTime(id, ms){
+    const p = points.find(x => x.id === id);
+    if(!p || p.state === "idle" || p.endTime === null) return;
+    p.endTime += ms;
     save();
     render();
   }
@@ -565,7 +640,6 @@
     input.addEventListener("blur", commit);
   }
 
-  // ระบบ Auto Loop: สลับเฟส 1 -> เฟส 2 -> วนกลับ เฟส 1 ทันที
   function syncPoint(p){
     const now = Date.now();
     let changed = false;
@@ -578,7 +652,7 @@
     }
     if(p.state === "phase2" && p.endTime !== null && now >= p.endTime){
       p.state = "phase1";
-      p.endTime = p.endTime + PHASE1_DURATION; // วนกลับไปเริ่มนับคูลดาวน์ 5:30 นาทีต่อทันที
+      p.endTime = p.endTime + PHASE1_DURATION;
       p.alertPlaying = false;
       changed = true;
     }
@@ -602,6 +676,10 @@
       ? `<input type="text" class="name-edit-input" value="${escapeHtml(p.name)}" maxlength="40" />`
       : `<div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>`;
 
+    const imgHtml = p.image 
+      ? `<img src="${p.image}" />` 
+      : `<div class="no-img" data-action="upload-img" data-id="${p.id}">+ คลิกเพื่อใส่อูปจุด</div>`;
+
     return `
       <div class="corner-bl"></div>
       <div class="corner-br"></div>
@@ -611,10 +689,12 @@
           <div class="point-config">เวลารอเกิด: 8:30 นาที</div>
         </div>
         <div class="card-top-actions">
+          <button class="btn-icon btn-img" data-action="upload-img" data-id="${p.id}" title="เปลี่ยนรูปภาพ">📷</button>
           <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ">✎</button>
           <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้">✕</button>
         </div>
       </div>
+      <div class="img-box">${imgHtml}</div>
       <div class="ring-wrap">
         <svg class="ring" viewBox="0 0 168 168">
           <circle class="ring-track" cx="84" cy="84" r="${RADIUS}"></circle>
@@ -626,6 +706,7 @@
           <div class="phase-label" data-role="phaselabel">รอเริ่ม</div>
         </div>
       </div>
+      <div class="time-adjust-bar" data-role="adjustBar"></div>
       <div class="status-line" data-role="status">&nbsp;</div>
       <div class="card-actions" data-role="actions"></div>
     `;
@@ -677,6 +758,7 @@
     const statusEl = el.querySelector('[data-role="status"]');
     const ringEl = el.querySelector('[data-role="ring"]');
     const actionsEl = el.querySelector('[data-role="actions"]');
+    const adjustBarEl = el.querySelector('[data-role="adjustBar"]');
 
     const now = Date.now();
     let remaining, total, ringColor, phaseText, statusText = "";
@@ -727,6 +809,17 @@
     ringEl.style.stroke = ringColor;
     ringEl.style.strokeDashoffset = offset;
 
+    if(p.state !== "idle"){
+      adjustBarEl.innerHTML = `
+        <button class="btn-adj" data-action="adjust" data-ms="-60000" data-id="${p.id}">-1m</button>
+        <button class="btn-adj" data-action="adjust" data-ms="-30000" data-id="${p.id}">-30s</button>
+        <button class="btn-adj" data-action="adjust" data-ms="30000" data-id="${p.id}">+30s</button>
+        <button class="btn-adj" data-action="adjust" data-ms="60000" data-id="${p.id}">+1m</button>
+      `;
+    } else {
+      adjustBarEl.innerHTML = "";
+    }
+
     if(p.state === "idle"){
       actionsEl.innerHTML = `<button class="btn btn-start" data-action="start" data-id="${p.id}">เริ่มจับเวลา</button>`;
     } else {
@@ -735,7 +828,7 @@
   }
 
   grid.addEventListener("click", (e) => {
-    const btn = e.target.closest("button[data-action]");
+    const btn = e.target.closest("[data-action]");
     if(!btn) return;
     const id = btn.dataset.id;
     const action = btn.dataset.action;
@@ -743,6 +836,32 @@
     else if(action === "reset") resetPoint(id);
     else if(action === "delete") deletePoint(id);
     else if(action === "edit") startEditName(id);
+    else if(action === "adjust"){
+      const ms = parseInt(btn.dataset.ms, 10);
+      adjustTime(id, ms);
+    }
+    else if(action === "upload-img"){
+      targetImgId = id;
+      fileInput.click();
+    }
+  });
+
+  fileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file || !targetImgId) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      const p = points.find(x => x.id === targetImgId);
+      if(p){
+        p.image = evt.target.result;
+        save();
+        render(true);
+      }
+      fileInput.value = "";
+      targetImgId = null;
+    };
+    reader.readAsDataURL(file);
   });
 
   addBtn.addEventListener("click", () => {
