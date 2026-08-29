@@ -18,14 +18,12 @@
     --muted: #6f8579;
     --muted-2: #4a5a51;
 
-    --p1: #3fd6c8;       /* phase 1 - cooldown */
+    --p1: #3fd6c8;
     --p1-glow: rgba(63,214,200,0.35);
-    --p2: #f5a623;       /* phase 2 - standby */
+    --p2: #f5a623;
     --p2-glow: rgba(245,166,35,0.35);
-    --alert: #ffe14d;    /* last 30s */
+    --alert: #ffe14d;
     --alert-2: #ff4d4d;
-    --ready: #58e37a;
-    --ready-glow: rgba(88,227,122,0.4);
 
     --font-display: 'Chakra Petch', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -115,15 +113,15 @@
     line-height:1.6;
   }
 
-  /* ADD POINT BAR */
   .add-bar{
     display:flex;
     gap:10px;
     margin-bottom: 26px;
     flex-wrap: wrap;
+    align-items: center;
   }
   .add-bar input[type="text"]{
-    flex: 1 1 260px;
+    flex: 1 1 250px;
     background: var(--panel);
     border: 1px solid var(--line);
     color: var(--text);
@@ -139,6 +137,7 @@
     border-color: var(--p1);
     box-shadow: 0 0 0 3px var(--p1-glow);
   }
+
   .btn-add{
     background: var(--p1);
     color: #06110e;
@@ -157,7 +156,6 @@
   .btn-add:hover{ filter: brightness(1.12); }
   .btn-add:active{ transform: scale(.97); }
 
-  /* GRID */
   .grid{
     display:grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -183,7 +181,6 @@
     margin-bottom:6px;
   }
 
-  /* CARD */
   .card{
     position: relative;
     background: linear-gradient(160deg, var(--panel-2), var(--panel));
@@ -197,7 +194,6 @@
     transition: box-shadow .3s, border-color .3s, background .3s;
   }
 
-  /* corner bracket signature frame */
   .card::before, .card::after,
   .corner-br, .corner-bl{
     content:"";
@@ -218,10 +214,6 @@
   .card[data-state="phase2"]{ border-color: rgba(245,166,35,0.35); }
   .card[data-state="phase2"]::before, .card[data-state="phase2"]::after,
   .card[data-state="phase2"] .corner-bl, .card[data-state="phase2"] .corner-br{ border-color: var(--p2); }
-
-  .card[data-state="grace"]{ border-color: rgba(88,227,122,0.5); }
-  .card[data-state="grace"]::before, .card[data-state="grace"]::after,
-  .card[data-state="grace"] .corner-bl, .card[data-state="grace"] .corner-br{ border-color: var(--ready); }
 
   .card.alerting{
     animation: alertBg 0.9s infinite;
@@ -253,6 +245,12 @@
     letter-spacing: .5px;
     word-break: break-word;
     line-height:1.3;
+  }
+  .point-config {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    margin-top: 4px;
   }
 
   .card-top-actions{
@@ -342,7 +340,6 @@
   }
   .card[data-state="phase1"] .status-line{ color: var(--p1); }
   .card[data-state="phase2"] .status-line{ color: var(--p2); }
-  .card[data-state="grace"] .status-line{ color: var(--ready); }
   .card.alerting .status-line{ color: var(--alert); font-weight:700; }
 
   .card-actions{
@@ -388,13 +385,6 @@
     color: var(--muted-2);
     letter-spacing: 1px;
   }
-
-  @media (prefers-reduced-motion: reduce){
-    .card.alerting, .card.alerting::before, .card.alerting::after,
-    .card.alerting .corner-bl, .card.alerting .corner-br, .eyebrow::before{
-      animation: none !important;
-    }
-  }
 </style>
 </head>
 <body>
@@ -405,13 +395,12 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      กด "เริ่มจับเวลา" ทันทีหลังกด E จก Bolter เสร็จ ระบบจะนับถอยหลัง 5 นาที (คูลดาวน์) แล้วสลับไปนับ 10 นาที 30 วินาที (รอเกิด) ต่อเองอัตโนมัติ
-      เมื่อเหลือ 30 วินาทีสุดท้ายการ์ดจะกะพริบเหลืองพร้อมเสียงเตือนให้วิ่งไปรอจุดจก พอครบแล้วระบบจะรออีก 30 วินาทีแล้ววนกลับไปคูลดาวน์รอบใหม่ให้เองอัตโนมัติ ไม่ต้องกดเริ่มซ้ำอีก
+      กดเริ่มนับหลังจกเสร็จ (คูลดาวน์ 5:30 นาที + รอเกิดฟิกซ์ 8:30 นาที) ครบเวลาระบบจะกลับสู่สถานะรอเริ่มให้อัตโนมัติ
     </div>
   </header>
 
   <div class="add-bar">
-    <input type="text" id="pointNameInput" placeholder="ชื่อจุดจก เช่น Bolter จุด 1, ป้อมตำรวจ..." maxlength="40" />
+    <input type="text" id="pointNameInput" placeholder="พิมพ์ชื่อจุดแล้วกดเพิ่ม เช่น Bolter จุด 1..." maxlength="40" />
     <button class="btn-add" id="addPointBtn">+ เพิ่มจุด</button>
   </div>
 
@@ -424,21 +413,18 @@
 (function(){
   "use strict";
 
-  const PHASE1_DURATION = 5 * 60 * 1000;   // 5 minutes
-  const PHASE2_DURATION = (10 * 60 + 30) * 1000;  // 10 minutes 30 seconds (matches actual in-game spawn timing)
-  const GRACE_DURATION = 30 * 1000;        // pause after spawn before auto-looping back into Phase 1
-  const ALERT_THRESHOLD = 30 * 1000;       // last 30 seconds of phase 2
-  const STORAGE_KEY = "bolterLoopPoints_v1";
+  const PHASE1_DURATION = (5 * 60 + 30) * 1000; // คูลดาวน์ 5:30 นาที
+  const PHASE2_DURATION = (8 * 60 + 30) * 1000; // ฟิกเวลารอเกิด 8:30 นาที
+  const ALERT_THRESHOLD = 30 * 1000;            // เตือน 30 วินาทีสุดท้าย
+  const STORAGE_KEY = "bolterLoopPoints_v6";
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
   const addBtn = document.getElementById("addPointBtn");
   const DEFAULT_TITLE = document.title;
 
-  /** @type {Array<{id:string,name:string,state:string,endTime:number|null,alertPlaying:boolean}>} */
   let points = [];
 
-  // ---------- Notifications ----------
   function ensureNotifyPermission(){
     if("Notification" in window && Notification.permission === "default"){
       Notification.requestPermission();
@@ -447,22 +433,21 @@
   function notifyAlert(pointName){
     if(!("Notification" in window)) return;
     if(Notification.permission !== "granted") return;
-    if(!document.hidden) return; // only nudge them when they're not already looking at the tab
+    if(!document.hidden) return;
     try{
       new Notification("BOLTER LOOP HELPER", {
         body: `${pointName} — เหลือ 30 วินาที ไปรอจุดจกได้เลย!`,
         tag: "bolter-alert-" + pointName,
       });
-    }catch(e){ /* notifications unsupported/blocked */ }
+    }catch(e){}
   }
 
-  // ---------- Audio ----------
   let audioCtx = null;
   function ensureAudio(){
     if(!audioCtx){
       try{
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }catch(e){ /* audio unsupported */ }
+      }catch(e){}
     }else if(audioCtx.state === "suspended"){
       audioCtx.resume();
     }
@@ -487,11 +472,8 @@
     beep(880, 140, 0.18);
   }
 
-  // ---------- Persistence ----------
   function save(){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(points));
-    }catch(e){ /* storage unavailable */ }
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(points)); }catch(e){}
   }
   function load(){
     try{
@@ -501,19 +483,17 @@
     if(!Array.isArray(points)) points = [];
   }
 
-  // ---------- State machine ----------
   function uid(){
     if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
   function addPoint(name){
-    // Adding a point IS the "just pressed E" moment, so start Phase 1 immediately.
     points.push({
       id: uid(),
       name: name,
-      state: "phase1",      // idle | phase1 | phase2 | grace
-      endTime: Date.now() + PHASE1_DURATION,
+      state: "idle",
+      endTime: null,
       alertPlaying: false
     });
     save();
@@ -553,26 +533,14 @@
     if(!p) return;
     p.name = newName;
     save();
-    // Patch the DOM directly so the running timer/render loop isn't disrupted mid-edit.
-    const el = grid.querySelector(`.card[data-id="${id}"]`);
-    if(el){
-      const input = el.querySelector(".name-edit-input");
-      const target = input || el.querySelector('[data-role="nameText"]');
-      if(target){
-        const div = document.createElement("div");
-        div.className = "point-name";
-        div.dataset.role = "nameText";
-        div.textContent = newName;
-        target.replaceWith(div);
-      }
-    }
+    render();
   }
 
   function startEditName(id){
     const el = grid.querySelector(`.card[data-id="${id}"]`);
     if(!el) return;
     const nameEl = el.querySelector('[data-role="nameText"]');
-    if(!nameEl) return; // already editing
+    if(!nameEl) return;
     const p = points.find(x => x.id === id);
     const currentName = p ? p.name : "";
 
@@ -586,32 +554,19 @@
     input.select();
 
     let settled = false;
-
     function commit(){
       if(settled) return;
       settled = true;
       const newName = input.value.trim() || currentName;
       renamePoint(id, newName);
     }
-    function cancel(){
-      if(settled) return;
-      settled = true;
-      const div = document.createElement("div");
-      div.className = "point-name";
-      div.dataset.role = "nameText";
-      div.textContent = currentName;
-      input.replaceWith(div);
-    }
 
     input.addEventListener("keydown", (e) => {
       if(e.key === "Enter"){ e.preventDefault(); commit(); }
-      else if(e.key === "Escape"){ e.preventDefault(); cancel(); }
     });
     input.addEventListener("blur", commit);
   }
 
-  // Cascade a point's phase forward based on elapsed real time (handles closed-tab / backgrounded cases).
-  // The loop is fully automatic once started: phase1 -> phase2 -> grace (30s) -> phase1 again...
   function syncPoint(p){
     const now = Date.now();
     let changed = false;
@@ -622,14 +577,9 @@
       changed = true;
     }
     if(p.state === "phase2" && p.endTime !== null && now >= p.endTime){
-      p.state = "grace";
-      p.endTime = p.endTime + GRACE_DURATION;
+      p.state = "idle";
+      p.endTime = null;
       p.alertPlaying = false;
-      changed = true;
-    }
-    if(p.state === "grace" && p.endTime !== null && now >= p.endTime){
-      p.state = "phase1";
-      p.endTime = p.endTime + PHASE1_DURATION;
       changed = true;
     }
     return changed;
@@ -643,7 +593,6 @@
     return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
   }
 
-  // ---------- Rendering ----------
   const RADIUS = 74;
   const CIRC = 2 * Math.PI * RADIUS;
 
@@ -652,10 +601,13 @@
       <div class="corner-bl"></div>
       <div class="corner-br"></div>
       <div class="card-top">
-        <div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>
+        <div>
+          <div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>
+          <div class="point-config">เวลารอเกิด: 8:30 นาที</div>
+        </div>
         <div class="card-top-actions">
-          <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ" aria-label="แก้ไขชื่อ">✎</button>
-          <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้" aria-label="ลบจุดนี้">✕</button>
+          <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ">✎</button>
+          <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้">✕</button>
         </div>
       </div>
       <div class="ring-wrap">
@@ -680,7 +632,6 @@
     return d.innerHTML;
   }
 
-  // Track which DOM nodes exist so we only rebuild the grid when the point list itself changes
   let renderedIds = [];
 
   function render(){
@@ -691,7 +642,7 @@
     if(points.length === 0){
       grid.innerHTML = `<div class="empty-state">
         <span class="big">ยังไม่มีจุดจับเวลา</span>
-        เพิ่มจุดแรกได้จากช่องด้านบน แล้วกดเริ่มจับเวลาทันทีที่จก Bolter เสร็จ
+        พิมพ์ชื่อจุดด้านบนแล้วกด "+ เพิ่มจุด" ได้เลย
       </div>`;
       renderedIds = [];
       return;
@@ -730,7 +681,7 @@
       total = PHASE1_DURATION;
       ringColor = "var(--p1)";
       phaseText = "เฟส 1 · คูลดาวน์";
-      statusText = "รอครบ 5 นาที ก่อนสลับไปสแตนด์บาย";
+      statusText = "รอครบ 5 นาที 30 วินาที";
       el.classList.remove("alerting");
     } else if(p.state === "phase2"){
       remaining = Math.max(0, p.endTime - now);
@@ -751,16 +702,7 @@
         el.classList.remove("alerting");
         p.alertPlaying = false;
       }
-    } else if(p.state === "grace"){
-      remaining = Math.max(0, p.endTime - now);
-      total = GRACE_DURATION;
-      ringColor = "var(--ready)";
-      phaseText = "หุ่นเกิดแล้ว!";
-      statusText = "กำลังเริ่มคูลดาวน์รอบใหม่อัตโนมัติ";
-      el.classList.remove("alerting");
-      p.alertPlaying = false;
     } else {
-      // idle — never started, or manually reset
       remaining = PHASE1_DURATION;
       total = PHASE1_DURATION;
       ringColor = "var(--muted-2)";
@@ -780,7 +722,6 @@
     ringEl.style.stroke = ringColor;
     ringEl.style.strokeDashoffset = offset;
 
-    // Actions
     if(p.state === "idle"){
       actionsEl.innerHTML = `<button class="btn btn-start" data-action="start" data-id="${p.id}">เริ่มจับเวลา</button>`;
     } else {
@@ -788,7 +729,6 @@
     }
   }
 
-  // ---------- Event delegation ----------
   grid.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-action]");
     if(!btn) return;
@@ -813,12 +753,11 @@
     if(e.key === "Enter") addBtn.click();
   });
 
-  // ---------- Tab title countdown ----------
   function updateTabTitle(){
     const now = Date.now();
     let soonest = null;
     points.forEach(p => {
-      if((p.state === "phase1" || p.state === "phase2" || p.state === "grace") && p.endTime !== null){
+      if((p.state === "phase1" || p.state === "phase2") && p.endTime !== null){
         const remaining = p.endTime - now;
         if(soonest === null || remaining < soonest.remaining){
           soonest = { remaining, name: p.name };
@@ -832,7 +771,6 @@
     }
   }
 
-  // ---------- Main loop ----------
   function tick(){
     let needSave = false;
     points.forEach(p => { while(syncPoint(p)){ needSave = true; } });
