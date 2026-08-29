@@ -119,15 +119,19 @@
     margin-bottom: 26px;
     flex-wrap: wrap;
     align-items: center;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 12px;
+    border-radius: 6px;
   }
   .add-bar input[type="text"]{
     flex: 1 1 250px;
-    background: var(--panel);
+    background: var(--bg);
     border: 1px solid var(--line);
     color: var(--text);
     font-family: var(--font-mono);
     font-size: 14px;
-    padding: 14px 16px;
+    padding: 12px 16px;
     border-radius: 4px;
     outline: none;
     transition: border-color .15s, box-shadow .15s;
@@ -138,6 +142,27 @@
     box-shadow: 0 0 0 3px var(--p1-glow);
   }
 
+  .file-upload-label {
+    background: var(--bg);
+    border: 1px dashed var(--line);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 12px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .file-upload-label:hover {
+    border-color: var(--p1);
+    color: var(--p1);
+  }
+  .file-upload-label input { display: none; }
+
   .btn-add{
     background: var(--p1);
     color: #06110e;
@@ -146,7 +171,7 @@
     font-weight: 700;
     font-size: 13px;
     letter-spacing: 1px;
-    padding: 14px 22px;
+    padding: 13px 22px;
     border-radius: 4px;
     cursor: pointer;
     text-transform: uppercase;
@@ -272,9 +297,11 @@
     font-size: 13px;
     line-height:1;
     padding:0;
+    text-decoration: none;
   }
   .btn-icon.btn-edit:hover{ border-color: var(--p1); color: var(--p1); }
   .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
+  .btn-icon.btn-img:hover{ border-color: var(--p2); color: var(--p2); }
 
   .name-edit-input{
     width: 100%;
@@ -341,7 +368,6 @@
   .card[data-state="phase2"] .status-line{ color: var(--p2); }
   .card.alerting .status-line{ color: var(--alert); font-weight:700; }
 
-  /* กล่องปุ่มควบคุมและปรับเวลา */
   .card-actions{
     width:100%;
     display:flex;
@@ -377,12 +403,6 @@
     transform: scale(0.95);
   }
 
-  .action-row {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-  }
-
   .btn{
     flex: 1;
     font-family: var(--font-mono);
@@ -413,6 +433,25 @@
   }
   .btn-reset:hover{ border-color: var(--alert-2); color: var(--alert-2); }
 
+  /* Modal สำหรับดูรูป */
+  .modal-overlay {
+    position: fixed; inset:0; background: rgba(0,0,0,0.85);
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-content {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-header {
+    padding: 12px 16px; border-bottom: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: 14px;
+  }
+  .modal-body { padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; }
+  .modal-body img { max-width: 100%; max-height: 75vh; border-radius: 4px; object-fit: contain; }
+
   footer{
     margin-top: 50px;
     text-align:center;
@@ -431,18 +470,35 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      ระบบจับเวลาวนลูปอัตโนมัติ พร้อมปุ่มปรับทดเวลาด่วนหน้าจอ
+      ระบบจับเวลาวนลูปอัตโนมัติ พร้อมปุ่มปรับทดเวลาและระบบแนบรูปภาพจุดจก
     </div>
   </header>
 
   <div class="add-bar">
-    <input type="text" id="pointNameInput" placeholder="พิมพ์ชื่อจุดแล้วกดเพิ่ม เช่น Bolter จุด 1..." maxlength="40" />
+    <input type="text" id="pointNameInput" placeholder="พิมพ์ชื่อจุด เช่น Bolter จุด 1..." maxlength="40" />
+    <label class="file-upload-label">
+      <span>📷 เลือกรูปจุด</span>
+      <input type="file" id="pointImageInput" accept="image/*" />
+    </label>
     <button class="btn-add" id="addPointBtn">+ เพิ่มจุด</button>
   </div>
 
   <div class="grid" id="pointsGrid"></div>
 
-  <footer>BOLTER-TIMER &middot; ข้อมูลบันทึกในเครื่องนี้เท่านั้น (LocalStorage)</footer>
+  <footer>BOLTER-TIMER &middot; ข้อมูลและรูปภาพบันทึกในเครื่องนี้ (LocalStorage)</footer>
+</div>
+
+<!-- Modal สำหรับแสดงรูปภาพใหญ่ -->
+<div class="modal-overlay" id="imageModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span id="modalTitle">รูปภาพจุดจก</span>
+      <button class="btn-icon btn-del" id="closeModalBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <img id="modalImage" src="" alt="Point Image" />
+    </div>
+  </div>
 </div>
 
 <script>
@@ -452,15 +508,31 @@
   const PHASE1_DURATION = (5 * 60 + 30) * 1000;
   const PHASE2_DURATION = (8 * 60 + 30) * 1000;
   const ALERT_THRESHOLD = 30 * 1000;
-  const STORAGE_KEY = "bolterLoopPoints_v11";
+  const STORAGE_KEY = "bolterLoopPoints_v12";
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
+  const imageInput = document.getElementById("pointImageInput");
   const addBtn = document.getElementById("addPointBtn");
+  const modal = document.getElementById("imageModal");
+  const modalImg = document.getElementById("modalImage");
+  const modalTitle = document.getElementById("modalTitle");
+  const closeModalBtn = document.getElementById("closeModalBtn");
   const DEFAULT_TITLE = document.title;
 
   let points = [];
   let editingId = null;
+  let pendingImageBase64 = null;
+
+  imageInput.addEventListener("change", function(e){
+    const file = e.target.files[0];
+    if(!file) { pendingImageBase64 = null; return; }
+    const reader = new FileReader();
+    reader.onload = function(evt){
+      pendingImageBase64 = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 
   function ensureNotifyPermission(){
     if("Notification" in window && Notification.permission === "default"){
@@ -525,10 +597,11 @@
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
-  function addPoint(name){
+  function addPoint(name, imageData){
     points.push({
       id: uid(),
       name: name,
+      image: imageData || null,
       state: "idle",
       endTime: null,
       alertPlaying: false
@@ -655,6 +728,7 @@
           <div class="point-config">วนลูปอัตโนมัติ</div>
         </div>
         <div class="card-top-actions">
+          ${p.image ? `<button class="btn-icon btn-img" data-action="showimage" data-id="${p.id}" title="ดูรูปจุด">📷</button>` : ''}
           <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ">✎</button>
           <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้">✕</button>
         </div>
@@ -691,7 +765,7 @@
     if(points.length === 0){
       grid.innerHTML = `<div class="empty-state">
         <span class="big">ยังไม่มีจุดจับเวลา</span>
-        พิมพ์ชื่อจุดด้านบนแล้วกด "+ เพิ่มจุด" ได้เลย
+        พิมพ์ชื่อจุดและแนบรูปภาพด้านบน แล้วกด "+ เพิ่มจุด" ได้เลย
       </div>`;
       renderedIds = [];
       return;
@@ -771,7 +845,6 @@
     ringEl.style.stroke = ringColor;
     ringEl.style.strokeDashoffset = offset;
 
-    // สร้างปุ่มควบคุมตามสถานะการทำงาน
     if(p.state === "idle"){
       actionsEl.innerHTML = `<button class="btn btn-start" data-action="start" data-id="${p.id}">เริ่มจับเวลา</button>`;
     } else {
@@ -787,6 +860,24 @@
     }
   }
 
+  function showImageModal(id){
+    const p = points.find(x => x.id === id);
+    if(!p || !p.image) return;
+    modalImg.src = p.image;
+    modalTitle.textContent = p.name;
+    modal.classList.add("active");
+  }
+
+  function hideImageModal(){
+    modal.classList.remove("active");
+    modalImg.src = "";
+  }
+
+  closeModalBtn.addEventListener("click", hideImageModal);
+  modal.addEventListener("click", (e) => {
+    if(e.target === modal) hideImageModal();
+  });
+
   grid.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-action]");
     if(!btn) return;
@@ -796,6 +887,7 @@
     else if(action === "reset") resetPoint(id);
     else if(action === "delete") deletePoint(id);
     else if(action === "edit") startEditName(id);
+    else if(action === "showimage") showImageModal(id);
     else if(action === "adjust"){
       const ms = parseInt(btn.dataset.ms, 10);
       adjustTime(id, ms);
@@ -807,8 +899,10 @@
     if(!name) { nameInput.focus(); return; }
     ensureAudio();
     ensureNotifyPermission();
-    addPoint(name);
+    addPoint(name, pendingImageBase64);
     nameInput.value = "";
+    imageInput.value = "";
+    pendingImageBase64 = null;
     nameInput.focus();
   });
   nameInput.addEventListener("keydown", (e) => {
