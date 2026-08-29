@@ -3,993 +3,364 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BOLTER LOOP HELPER</title>
+<title>BOLTER LOOP HELPER (CLOUD VERSION)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Chakra+Petch:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --bg: #070b09;
-    --bg-grid: #0d1310;
-    --panel: #0f1613;
-    --panel-2: #131c18;
-    --line: #223028;
-    --text: #dff2e8;
-    --muted: #6f8579;
-    --muted-2: #4a5a51;
-
-    --p1: #3fd6c8;
-    --p1-glow: rgba(63,214,200,0.35);
-    --p2: #f5a623;
-    --p2-glow: rgba(245,166,35,0.35);
-    --alert: #ffe14d;
-    --alert-2: #ff4d4d;
-
-    --font-display: 'Chakra Petch', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --bg: #070b09; --bg-grid: #0d1310; --panel: #0f1613; --panel-2: #131c18;
+    --line: #223028; --text: #dff2e8; --muted: #6f8579; --muted-2: #4a5a51;
+    --p1: #3fd6c8; --p1-glow: rgba(63,214,200,0.35);
+    --p2: #f5a623; --p2-glow: rgba(245,166,35,0.35);
+    --alert: #ffe14d; --alert-2: #ff4d4d;
+    --font-display: 'Chakra Petch', sans-serif; --font-mono: 'JetBrains Mono', monospace;
   }
-
   *{ box-sizing: border-box; }
-
-  html,body{
-    margin:0; padding:0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font-display);
-    min-height:100vh;
-  }
-
-  body{
-    background-image:
-      linear-gradient(var(--bg-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
-    background-size: 28px 28px;
-    background-position: center;
-  }
-
-  .scanline-overlay{
-    position: fixed; inset:0; pointer-events:none; z-index: 50;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(0,0,0,0) 0px,
-      rgba(0,0,0,0) 2px,
-      rgba(0,20,10,0.035) 3px,
-      rgba(0,20,10,0.035) 4px
-    );
-    mix-blend-mode: multiply;
-  }
-
-  .wrap{
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 28px 20px 80px;
-  }
-
-  header.top{
-    display:flex;
-    flex-direction: column;
-    gap: 6px;
-    margin-bottom: 28px;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 18px;
-  }
-
-  .eyebrow{
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: var(--p1);
-    text-transform: uppercase;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .eyebrow::before{
-    content:"";
-    width:7px; height:7px;
-    background: var(--p1);
-    border-radius:50%;
-    box-shadow: 0 0 8px var(--p1);
-    animation: pulseDot 2s infinite ease-in-out;
-  }
-  @keyframes pulseDot{
-    0%,100%{ opacity:1; }
-    50%{ opacity: .35; }
-  }
-
-  h1{
-    margin:0;
-    font-size: clamp(28px, 5vw, 42px);
-    font-weight: 700;
-    letter-spacing: 1px;
-    display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
-  }
+  html,body{ margin:0; padding:0; background: var(--bg); color: var(--text); font-family: var(--font-display); min-height:100vh; }
+  body{ background-image: linear-gradient(var(--bg-grid) 1px, transparent 1px), linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px); background-size: 28px 28px; background-position: center; }
+  .scanline-overlay{ position: fixed; inset:0; pointer-events:none; z-index: 50; background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,20,10,0.035) 3px, rgba(0,20,10,0.035) 4px); mix-blend-mode: multiply; }
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.top{ display:flex; flex-direction: column; gap: 6px; margin-bottom: 28px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+  .eyebrow{ font-family: var(--font-mono); font-size: 11px; letter-spacing: 3px; color: var(--p1); text-transform: uppercase; display:flex; align-items:center; gap:8px; }
+  .eyebrow::before{ content:""; width:7px; height:7px; background: var(--p1); border-radius:50%; box-shadow: 0 0 8px var(--p1); animation: pulseDot 2s infinite ease-in-out; }
+  @keyframes pulseDot{ 0%,100%{ opacity:1; } 50%{ opacity: .35; } }
+  h1{ margin:0; font-size: clamp(28px, 5vw, 42px); font-weight: 700; letter-spacing: 1px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
   h1 .accent{ color: var(--p1); }
-  .subtitle{
-    color: var(--muted);
-    font-size: 13px;
-    font-family: var(--font-mono);
-    max-width: 640px;
-    line-height:1.6;
-  }
-
-  .add-bar{
-    display:flex;
-    gap:10px;
-    margin-bottom: 26px;
-    flex-wrap: wrap;
-    align-items: center;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    padding: 12px;
-    border-radius: 6px;
-  }
-  .add-bar input[type="text"]{
-    flex: 1 1 250px;
-    background: var(--bg);
-    border: 1px solid var(--line);
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 14px;
-    padding: 12px 16px;
-    border-radius: 4px;
-    outline: none;
-    transition: border-color .15s, box-shadow .15s;
-  }
+  .subtitle{ color: var(--muted); font-size: 13px; font-family: var(--font-mono); max-width: 640px; line-height:1.6; }
+  .add-bar{ display:flex; gap:10px; margin-bottom: 26px; flex-wrap: wrap; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 12px; border-radius: 6px; }
+  .add-bar input[type="text"]{ flex: 1 1 250px; background: var(--bg); border: 1px solid var(--line); color: var(--text); font-family: var(--font-mono); font-size: 14px; padding: 12px 16px; border-radius: 4px; outline: none; transition: border-color .15s, box-shadow .15s; }
   .add-bar input[type="text"]::placeholder{ color: var(--muted-2); }
-  .add-bar input[type="text"]:focus{
-    border-color: var(--p1);
-    box-shadow: 0 0 0 3px var(--p1-glow);
-  }
-
-  .btn-add{
-    background: var(--p1);
-    color: #06110e;
-    border: none;
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 13px;
-    letter-spacing: 1px;
-    padding: 13px 22px;
-    border-radius: 4px;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: transform .12s, filter .12s;
-    white-space: nowrap;
-  }
+  .add-bar input[type="text"]:focus{ border-color: var(--p1); box-shadow: 0 0 0 3px var(--p1-glow); }
+  .btn-add{ background: var(--p1); color: #06110e; border: none; font-family: var(--font-mono); font-weight: 700; font-size: 13px; letter-spacing: 1px; padding: 13px 22px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: transform .12s, filter .12s; white-space: nowrap; }
   .btn-add:hover{ filter: brightness(1.12); }
   .btn-add:active{ transform: scale(.97); }
-
-  .grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-  }
-
-  .empty-state{
-    grid-column: 1 / -1;
-    border: 1px dashed var(--line);
-    border-radius: 6px;
-    padding: 50px 20px;
-    text-align:center;
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 1.8;
-  }
-  .empty-state .big{
-    font-family: var(--font-display);
-    color: var(--muted);
-    font-size: 18px;
-    display:block;
-    margin-bottom:6px;
-  }
-
-  .card{
-    position: relative;
-    background: linear-gradient(160deg, var(--panel-2), var(--panel));
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 22px 20px 20px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap: 14px;
-    transition: box-shadow .3s, border-color .3s, background .3s;
-  }
-
-  .card::before, .card::after,
-  .corner-br, .corner-bl{
-    content:"";
-    position:absolute;
-    width: 16px; height: 16px;
-    border: 2px solid var(--muted-2);
-    transition: border-color .3s;
-  }
+  .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .empty-state{ grid-column: 1 / -1; border: 1px dashed var(--line); border-radius: 6px; padding: 50px 20px; text-align:center; color: var(--muted); font-family: var(--font-mono); font-size: 13px; line-height: 1.8; }
+  .empty-state .big{ font-family: var(--font-display); color: var(--muted); font-size: 18px; display:block; margin-bottom:6px; }
+  .card{ position: relative; background: linear-gradient(160deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: 6px; padding: 22px 20px 20px; display:flex; flex-direction:column; align-items:center; gap: 14px; transition: box-shadow .3s, border-color .3s, background .3s; }
+  .card::before, .card::after, .corner-br, .corner-bl{ content:""; position:absolute; width: 16px; height: 16px; border: 2px solid var(--muted-2); transition: border-color .3s; }
   .card::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
   .card::after{ top:-1px; right:-1px; border-left:none; border-bottom:none; }
   .corner-bl{ bottom:-1px; left:-1px; border-right:none; border-top:none; }
   .corner-br{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
-
   .card[data-state="phase1"]{ border-color: rgba(63,214,200,0.35); }
-  .card[data-state="phase1"]::before, .card[data-state="phase1"]::after,
-  .card[data-state="phase1"] .corner-bl, .card[data-state="phase1"] .corner-br{ border-color: var(--p1); }
-
+  .card[data-state="phase1"]::before, .card[data-state="phase1"]::after, .card[data-state="phase1"] .corner-bl, .card[data-state="phase1"] .corner-br{ border-color: var(--p1); }
   .card[data-state="phase2"]{ border-color: rgba(245,166,35,0.35); }
-  .card[data-state="phase2"]::before, .card[data-state="phase2"]::after,
-  .card[data-state="phase2"] .corner-bl, .card[data-state="phase2"] .corner-br{ border-color: var(--p2); }
-
-  .card.alerting{
-    animation: alertBg 0.9s infinite;
-  }
-  @keyframes alertBg{
-    0%,100%{ box-shadow: 0 0 0 rgba(255,225,77,0); background: linear-gradient(160deg, var(--panel-2), var(--panel)); }
-    50%{ box-shadow: 0 0 26px 4px rgba(255,225,77,0.55); background: linear-gradient(160deg, #2a250f, #1a1710); }
-  }
-  .card.alerting::before, .card.alerting::after,
-  .card.alerting .corner-bl, .card.alerting .corner-br{
-    animation: alertCorner .9s infinite;
-  }
-  @keyframes alertCorner{
-    0%,100%{ border-color: var(--alert); }
-    50%{ border-color: var(--alert-2); }
-  }
-
-  .card-top{
-    width:100%;
-    display:flex;
-    justify-content: space-between;
-    align-items:flex-start;
-    gap: 8px;
-  }
-
-  .point-name{
-    font-weight: 600;
-    font-size: 16px;
-    letter-spacing: .5px;
-    word-break: break-word;
-    line-height:1.3;
-  }
-  .point-config {
-    font-size: 11px;
-    color: var(--muted);
-    font-family: var(--font-mono);
-    margin-top: 4px;
-  }
-
-  .card-top-actions{
-    display:flex;
-    gap: 6px;
-    flex-shrink:0;
-  }
-
-  .btn-icon{
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--muted);
-    width: 28px; height: 28px;
-    border-radius: 4px;
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
-    transition: border-color .15s, color .15s;
-    font-size: 13px;
-    line-height:1;
-    padding:0;
-    text-decoration: none;
-  }
+  .card[data-state="phase2"]::before, .card[data-state="phase2"]::after, .card[data-state="phase2"] .corner-bl, .card[data-state="phase2"] .corner-br{ border-color: var(--p2); }
+  .card.alerting{ animation: alertBg 0.9s infinite; }
+  @keyframes alertBg{ 0%,100%{ box-shadow: 0 0 0 rgba(255,225,77,0); background: linear-gradient(160deg, var(--panel-2), var(--panel)); } 50%{ box-shadow: 0 0 26px 4px rgba(255,225,77,0.55); background: linear-gradient(160deg, #2a250f, #1a1710); } }
+  .card.alerting::before, .card.alerting::after, .card.alerting .corner-bl, .card.alerting .corner-br{ animation: alertCorner .9s infinite; }
+  @keyframes alertCorner{ 0%,100%{ border-color: var(--alert); } 50%{ border-color: var(--alert-2); } }
+  .card-top{ width:100%; display:flex; justify-content: space-between; align-items:flex-start; gap: 8px; }
+  .point-name{ font-weight: 600; font-size: 16px; letter-spacing: .5px; word-break: break-word; line-height:1.3; }
+  .card-top-actions{ display:flex; gap: 6px; flex-shrink:0; }
+  .btn-icon{ background: transparent; border: 1px solid var(--line); color: var(--muted); width: 28px; height: 28px; border-radius: 4px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition: border-color .15s, color .15s; font-size: 13px; line-height:1; padding:0; text-decoration: none; }
   .btn-icon.btn-edit:hover{ border-color: var(--p1); color: var(--p1); }
   .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
-
-  /* ช่องรูปภาพประจำการ์ด ตรงกลางสวยๆ */
-  .card-image-box {
-    width: 100%;
-    height: 120px;
-    border: 1px dashed var(--line);
-    border-radius: 4px;
-    overflow: hidden;
-    background: var(--bg);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color .15s;
-  }
-  .card-image-box:hover {
-    border-color: var(--p1);
-  }
-  .card-image-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    cursor: pointer;
-    transition: transform .2s;
-  }
-  .card-image-box img:hover {
-    transform: scale(1.03);
-  }
-  .upload-label {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    background: rgba(255,255,255,0.01);
-    transition: color .15s, background .15s;
-  }
-  .upload-label:hover {
-    color: var(--p1);
-    background: rgba(63,214,200,0.03);
-  }
-  .upload-label input {
-    display: none;
-  }
-
-  .name-edit-input{
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--p1);
-    color: var(--text);
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 15px;
-    letter-spacing: .5px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    outline: none;
-    box-shadow: 0 0 0 3px var(--p1-glow);
-  }
-
-  .ring-wrap{
-    position: relative;
-    width: 160px; height: 160px;
-    display:flex; align-items:center; justify-content:center;
-  }
+  .card-image-box { width: 100%; height: 120px; border: 1px dashed var(--line); border-radius: 4px; overflow: hidden; background: var(--bg); position: relative; display: flex; align-items: center; justify-content: center; transition: border-color .15s; }
+  .card-image-box:hover { border-color: var(--p1); }
+  .card-image-box img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+  .upload-label { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--muted); font-family: var(--font-mono); font-size: 11px; cursor: pointer; width: 100%; height: 100%; justify-content: center; background: rgba(255,255,255,0.01); transition: color .15s, background .15s; }
+  .upload-label:hover { color: var(--p1); background: rgba(63,214,200,0.03); }
+  .upload-label input { display: none; }
+  .name-edit-input{ width: 100%; background: var(--bg); border: 1px solid var(--p1); color: var(--text); font-family: var(--font-display); font-weight: 600; font-size: 15px; padding: 4px 8px; border-radius: 4px; outline: none; }
+  .ring-wrap{ position: relative; width: 160px; height: 160px; display:flex; align-items:center; justify-content:center; }
   svg.ring{ transform: rotate(-90deg); width:160px; height:160px; }
   .ring-track{ fill:none; stroke: var(--line); stroke-width: 8; }
-  .ring-progress{
-    fill:none;
-    stroke-width: 8;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.4s linear, stroke .3s;
-  }
-
-  .ring-center{
-    position:absolute;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap: 3px;
-  }
-  .digits{
-    font-family: var(--font-mono);
-    font-size: 28px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    font-variant-numeric: tabular-nums;
-  }
-  .phase-label{
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 1.2px;
-    color: var(--muted);
-    text-transform: uppercase;
-    text-align:center;
-    max-width: 120px;
-  }
-
-  .status-line{
-    font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: .5px;
-    text-align:center;
-    min-height: 15px;
-    color: var(--muted);
-  }
+  .ring-progress{ fill:none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear, stroke .3s; }
+  .ring-center{ position:absolute; display:flex; flex-direction:column; align-items:center; gap: 3px; }
+  .digits{ font-family: var(--font-mono); font-size: 28px; font-weight: 700; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+  .phase-label{ font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.2px; color: var(--muted); text-transform: uppercase; text-align:center; }
+  .status-line{ font-family: var(--font-mono); font-size: 11px; text-align:center; min-height: 15px; color: var(--muted); }
   .card[data-state="phase1"] .status-line{ color: var(--p1); }
   .card[data-state="phase2"] .status-line{ color: var(--p2); }
-  .card.alerting .status-line{ color: var(--alert); font-weight:700; }
-
-  .card-actions{
-    width:100%;
-    display:flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .time-adjust-bar {
-    display: flex;
-    gap: 5px;
-    width: 100%;
-  }
-  .btn-adj {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    color: var(--text);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 8px 0;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all .15s;
-    flex: 1;
-    text-align: center;
-  }
-  .btn-adj:hover {
-    border-color: var(--p2);
-    color: var(--p2);
-    background: rgba(245,166,35,0.08);
-  }
-  .btn-adj:active {
-    transform: scale(0.95);
-  }
-
-  .btn{
-    flex: 1;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 11px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    border: none;
-    transition: transform .12s, filter .12s;
-    text-align: center;
-  }
-  .btn:active{ transform: scale(.96); }
-
-  .btn-start{
-    background: var(--p1);
-    color: #06110e;
-    width: 100%;
-  }
-  .btn-start:hover{ filter: brightness(1.12); }
-
-  .btn-reset{
-    background: transparent;
-    border: 1px solid var(--line);
-    color: var(--muted);
-  }
-  .btn-reset:hover{ border-color: var(--alert-2); color: var(--alert-2); }
-
-  /* Modal สำหรับดูรูปขยายใหญ่ */
-  .modal-overlay {
-    position: fixed; inset:0; background: rgba(0,0,0,0.85);
-    z-index: 100; display: flex; align-items: center; justify-content: center;
-    padding: 20px; opacity: 0; pointer-events: none; transition: opacity .2s;
-  }
-  .modal-overlay.active { opacity: 1; pointer-events: auto; }
-  .modal-content {
-    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
-    max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden;
-  }
-  .modal-header {
-    padding: 12px 16px; border-bottom: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center;
-    font-family: var(--font-mono); font-size: 14px;
-  }
-  .modal-body { padding: 10px; display: flex; justify-content: center; align-items: center; overflow: auto; }
-  .modal-body img { max-width: 100%; max-height: 75vh; border-radius: 4px; object-fit: contain; }
-
-  footer{
-    margin-top: 50px;
-    text-align:center;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--muted-2);
-    letter-spacing: 1px;
-  }
+  .card-actions{ width:100%; display:flex; flex-direction: column; gap: 8px; }
+  .time-adjust-bar { display: flex; gap: 5px; width: 100%; }
+  .btn-adj { background: var(--panel); border: 1px solid var(--line); color: var(--text); font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 8px 0; border-radius: 4px; cursor: pointer; flex: 1; transition: background .15s, border-color .15s; }
+  .btn-adj:hover { background: var(--line); border-color: var(--muted); }
+  .btn-main-action { width: 100%; background: transparent; border: 1px solid var(--p1); color: var(--p1); font-family: var(--font-mono); font-weight: 700; font-size: 12px; letter-spacing: 1px; padding: 10px; border-radius: 4px; cursor: pointer; text-transform: uppercase; transition: background .15s, color .15s; }
+  .btn-main-action:hover { background: var(--p1); color: #06110e; }
+  .loading-overlay { position: fixed; inset: 0; background: rgba(7,11,9,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; font-family: var(--font-mono); color: var(--p1); gap: 10px; display: none; }
+  .spinner { width: 40px; height: 40px; border: 3px solid var(--line); border-top-color: var(--p1); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="scanline-overlay"></div>
-<div class="wrap">
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div id="loadingText">กำลังซิงค์ข้อมูลกับ Supabase...</div>
+</div>
 
+<div class="wrap">
   <header class="top">
-    <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
-    <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
-    <div class="subtitle">
-      ระบบจับเวลาวนลูปอัตโนมัติ เพิ่มชื่อจุดแล้วคลิกอัปโหลดรูปภาพได้โดยตรงบนการ์ด
-    </div>
+    <div class="eyebrow">FIVE M // SYSTEM CLOUD v2.0</div>
+    <h1>BOLTER LOOP <span class="accent">HELPER</span></h1>
+    <div class="subtitle">ระบบจับเวลาจุดตุนเสบียง เชื่อมต่อฐานข้อมูลคลาวด์ ข้อมูลไม่หายแมรีเฟรช</div>
   </header>
 
   <div class="add-bar">
-    <input type="text" id="pointNameInput" placeholder="พิมพ์ชื่อจุด เช่น Bolter จุด 1..." maxlength="40" />
-    <button class="btn-add" id="addPointBtn">+ เพิ่มจุด</button>
+    <input type="text" id="pointNameInput" placeholder="ระบุชื่อจุด (เช่น จุดส่งของ A, คลังสินค้า)..." />
+    <button class="btn-add" id="addPointBtn">+ เพิ่มจุดจับเวลา</button>
   </div>
 
-  <div class="grid" id="pointsGrid"></div>
-
-  <footer>BOLTER-TIMER &middot; ข้อมูลและรูปภาพบันทึกในเครื่องนี้ (LocalStorage)</footer>
-</div>
-
-<!-- Modal สำหรับแสดงรูปภาพขนาดใหญ่ -->
-<div class="modal-overlay" id="imageModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <span id="modalTitle">รูปภาพจุดจก</span>
-      <button class="btn-icon btn-del" id="closeModalBtn">✕</button>
-    </div>
-    <div class="modal-body">
-      <img id="modalImage" src="" alt="Point Image" />
+  <div class="grid" id="pointsGrid">
+    <div class="empty-state">
+      <span class="big">ยังไม่มีจุดจับเวลาในระบบ</span>
+      พิมพ์ชื่อจุดด้านบนแล้วกดเพิ่ม เพื่อเริ่มใช้งานได้ทันที
     </div>
   </div>
 </div>
 
 <script>
-(function(){
-  "use strict";
+  // ตั้งค่าเชื่อมต่อ Supabase ของคุณ
+  const SUPABASE_URL = "https://vhzcrjpouayksugfkipi.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_8sN-YXPYkRbF86jqIE66NA_zWMzyf-c";
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const PHASE1_DURATION = (5 * 60 + 30) * 1000;
-  const PHASE2_DURATION = (8 * 60 + 30) * 1000;
-  const ALERT_THRESHOLD = 30 * 1000;
-  const STORAGE_KEY = "bolterLoopPoints_v15";
+  const PHASE1_DURATION = 30 * 60; // 30 นาที
+  const PHASE2_DURATION = 15 * 60; // 15 นาที
 
-  const grid = document.getElementById("pointsGrid");
-  const nameInput = document.getElementById("pointNameInput");
-  const addBtn = document.getElementById("addPointBtn");
-  const modal = document.getElementById("imageModal");
-  const modalImg = document.getElementById("modalImage");
-  const modalTitle = document.getElementById("modalTitle");
-  const closeModalBtn = document.getElementById("closeModalBtn");
-  const DEFAULT_TITLE = document.title;
+  let pointsData = [];
 
-  let points = [];
-  let editingId = null;
+  function showLoading(text) {
+    document.getElementById('loadingText').innerText = text;
+    document.getElementById('loadingOverlay').style.display = 'flex';
+  }
+  function hideLoading() {
+    document.getElementById('loadingOverlay').style.display = 'none';
+  }
 
-  function ensureNotifyPermission(){
-    if("Notification" in window && Notification.permission === "default"){
-      Notification.requestPermission();
+  // โหลดข้อมูลจาก Supabase
+  async function loadPointsFromSupabase() {
+    showLoading("กำลังโหลดข้อมูล...");
+    const { data, error } = await supabaseClient.from('bolter_points').select('*').order('id', { ascending: true });
+    hideLoading();
+    if (error) {
+      console.error('Error loading:', error);
+      alert('ไม่สามารถโหลดข้อมูลจาก Supabase ได้');
+      return;
     }
-  }
-  function notifyAlert(pointName){
-    if(!("Notification" in window)) return;
-    if(Notification.permission !== "granted") return;
-    if(!document.hidden) return;
-    try{
-      new Notification("BOLTER LOOP HELPER", {
-        body: `${pointName} — เหลือ 30 วินาที ไปรอจุดจกได้เลย!`,
-        tag: "bolter-alert-" + pointName,
-      });
-    }catch(e){}
-  }
-
-  let audioCtx = null;
-  function ensureAudio(){
-    if(!audioCtx){
-      try{
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }catch(e){}
-    }else if(audioCtx.state === "suspended"){
-      audioCtx.resume();
-    }
-  }
-  function beep(freq, duration, delay){
-    if(!audioCtx) return;
-    const t0 = audioCtx.currentTime + (delay||0);
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(freq, t0);
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.exponentialRampToValueAtTime(0.18, t0 + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration/1000);
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start(t0);
-    osc.stop(t0 + duration/1000 + 0.02);
-  }
-  function playAlertPulse(){
-    beep(880, 140, 0);
-    beep(880, 140, 0.18);
-  }
-
-  function save(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(points)); }catch(e){}
-  }
-  function load(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) points = JSON.parse(raw);
-    }catch(e){ points = []; }
-    if(!Array.isArray(points)) points = [];
-  }
-
-  function uid(){
-    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
-  }
-
-  function addPoint(name){
-    points.push({
-      id: uid(),
-      name: name,
-      image: null,
-      state: "idle",
-      endTime: null,
-      alertPlaying: false
+    
+    // แปลงข้อมูลให้อยู่ในรูปแบบที่แอปใช้งาน
+    pointsData = data.map(item => {
+      const now = Math.floor(Date.now() / 1000);
+      let endTime = item.end_time || (now + PHASE1_DURATION);
+      let state = item.state || 'phase1';
+      return {
+        id: item.id,
+        name: item.name,
+        imageUrl: item.image_url || '',
+        state: state,
+        endTime: endTime,
+        isEditing: false
+      };
     });
-    save();
-    render(true);
+    renderGrid();
   }
 
-  function deletePoint(id){
-    points = points.filter(p => p.id !== id);
-    if(editingId === id) editingId = null;
-    save();
-    render(true);
-  }
+  // เพิ่มจุดใหม่
+  async function addPoint() {
+    const input = document.getElementById('pointNameInput');
+    const name = input.value.trim();
+    if (!name) return;
 
-  function updatePointImage(id, imageData){
-    const p = points.find(x => x.id === id);
-    if(!p) return;
-    p.image = imageData;
-    save();
-    render(true);
-  }
+    const now = Math.floor(Date.now() / 1000);
+    const defaultEndTime = now + PHASE1_DURATION;
 
-  function startPoint(id){
-    ensureAudio();
-    ensureNotifyPermission();
-    const p = points.find(x => x.id === id);
-    if(!p) return;
-    p.state = "phase1";
-    p.endTime = Date.now() + PHASE1_DURATION;
-    p.alertPlaying = false;
-    save();
-    render();
-  }
+    showLoading("กำลังบันทึกข้อมูล...");
+    const { data, error } = await supabaseClient.from('bolter_points').insert([
+      { name: name, image_url: '', state: 'phase1', end_time: defaultEndTime }
+    ]).select();
 
-  function resetPoint(id){
-    const p = points.find(x => x.id === id);
-    if(!p) return;
-    p.state = "idle";
-    p.endTime = null;
-    p.alertPlaying = false;
-    save();
-    render();
-  }
-
-  function adjustTime(id, ms){
-    const p = points.find(x => x.id === id);
-    if(!p || p.state === "idle" || p.endTime === null) return;
-    p.endTime += ms;
-    save();
-    render();
-  }
-
-  function renamePoint(id, newName){
-    const p = points.find(x => x.id === id);
-    if(!p) return;
-    p.name = newName;
-    save();
-    editingId = null;
-    render(true);
-  }
-
-  function startEditName(id){
-    editingId = id;
-    render(true);
-
-    const el = grid.querySelector(`.card[data-id="${id}"]`);
-    if(!el) return;
-    const input = el.querySelector('.name-edit-input');
-    if(!input) return;
-
-    input.focus();
-    input.select();
-
-    let settled = false;
-    function commit(){
-      if(settled) return;
-      settled = true;
-      const newName = input.value.trim() || (points.find(x => x.id === id)?.name || "");
-      renamePoint(id, newName);
-    }
-
-    input.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){ e.preventDefault(); commit(); }
-      if(e.key === "Escape"){ settled = true; editingId = null; render(true); }
-    });
-    input.addEventListener("blur", commit);
-  }
-
-  function syncPoint(p){
-    const now = Date.now();
-    let changed = false;
-
-    if(p.state === "phase1" && p.endTime !== null && now >= p.endTime){
-      p.state = "phase2";
-      p.endTime = p.endTime + PHASE2_DURATION;
-      p.alertPlaying = false;
-      changed = true;
-    }
-    if(p.state === "phase2" && p.endTime !== null && now >= p.endTime){
-      p.state = "phase1";
-      p.endTime = p.endTime + PHASE1_DURATION;
-      p.alertPlaying = false;
-      changed = true;
-    }
-    return changed;
-  }
-
-  function fmt(ms){
-    if(ms < 0) ms = 0;
-    const totalSec = Math.ceil(ms / 1000);
-    const m = Math.floor(totalSec / 60);
-    const s = totalSec % 60;
-    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
-  }
-
-  const RADIUS = 68;
-  const CIRC = 2 * Math.PI * RADIUS;
-
-  function cardTemplate(p){
-    const isEditing = p.id === editingId;
-    const titleHtml = isEditing 
-      ? `<input type="text" class="name-edit-input" value="${escapeHtml(p.name)}" maxlength="40" />`
-      : `<div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>`;
-
-    const imageBoxHtml = p.image 
-      ? `<div class="card-image-box">
-           <img src="${p.image}" alt="Point Image" data-action="showimage" data-id="${p.id}" title="คลิกเพื่อขยายรูป" />
-           <label class="btn-icon" style="position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.75); border-color:var(--line); width:26px; height:26px; font-size:12px;" title="เปลี่ยนรูปภาพ">
-             📷
-             <input type="file" class="card-file-input" data-id="${p.id}" accept="image/*" style="display:none;" />
-           </label>
-         </div>`
-      : `<div class="card-image-box">
-           <label class="upload-label">
-             <span style="font-size:18px;">📷</span>
-             <span>คลิกเพื่อเพิ่มรูปภาพจุด</span>
-             <input type="file" class="card-file-input" data-id="${p.id}" accept="image/*" />
-           </label>
-         </div>`;
-
-    return `
-      <div class="corner-bl"></div>
-      <div class="corner-br"></div>
-      <div class="card-top">
-        <div style="flex:1; min-width:0;">
-          ${titleHtml}
-          <div class="point-config">วนลูปอัตโนมัติ</div>
-        </div>
-        <div class="card-top-actions">
-          <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ">✎</button>
-          <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้">✕</button>
-        </div>
-      </div>
-      ${imageBoxHtml}
-      <div class="ring-wrap">
-        <svg class="ring" viewBox="0 0 160 160">
-          <circle class="ring-track" cx="80" cy="80" r="${RADIUS}"></circle>
-          <circle class="ring-progress" data-role="ring" cx="80" cy="80" r="${RADIUS}"
-            stroke-dasharray="${CIRC}" stroke-dashoffset="0"></circle>
-        </svg>
-        <div class="ring-center">
-          <div class="digits" data-role="digits">--:--</div>
-          <div class="phase-label" data-role="phaselabel">รอเริ่ม</div>
-        </div>
-      </div>
-      <div class="status-line" data-role="status">&nbsp;</div>
-      <div class="card-actions" data-role="actions"></div>
-    `;
-  }
-
-  function escapeHtml(str){
-    const d = document.createElement("div");
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  let renderedIds = [];
-
-  function render(forceRebuild = false){
-    const currentIds = points.map(p => p.id);
-    const structureChanged = forceRebuild || currentIds.length !== renderedIds.length ||
-      currentIds.some((id, i) => id !== renderedIds[i]);
-
-    if(points.length === 0){
-      grid.innerHTML = `<div class="empty-state">
-        <span class="big">ยังไม่มีจุดจับเวลา</span>
-        พิมพ์ชื่อจุดด้านบน แล้วกด "+ เพิ่มจุด" ได้เลย
-      </div>`;
-      renderedIds = [];
+    hideLoading();
+    if (error) {
+      console.error('Error adding:', error);
+      alert('เพิ่มข้อมูลไม่สำเร็จ');
       return;
     }
 
-    if(structureChanged){
-      grid.innerHTML = "";
-      points.forEach(p => {
-        const el = document.createElement("div");
-        el.className = "card";
-        el.dataset.id = p.id;
-        el.innerHTML = cardTemplate(p);
-        grid.appendChild(el);
-      });
-      renderedIds = currentIds;
-    }
-
-    points.forEach(p => updateCard(p));
+    input.value = '';
+    loadPointsFromSupabase();
   }
 
-  function updateCard(p){
-    const el = grid.querySelector(`.card[data-id="${p.id}"]`);
-    if(!el) return;
+  // อัปเดตข้อมูลจุดใน Supabase
+  async function updatePointInDB(id, updateFields) {
+    await supabaseClient.from('bolter_points').update(updateFields).eq('id', id);
+  }
 
-    const digitsEl = el.querySelector('[data-role="digits"]');
-    const phaseLabelEl = el.querySelector('[data-role="phaselabel"]');
-    const statusEl = el.querySelector('[data-role="status"]');
-    const ringEl = el.querySelector('[data-role="ring"]');
-    const actionsEl = el.querySelector('[data-role="actions"]');
+  // ลบจุด
+  async function deletePoint(id) {
+    if (!confirm('ต้องการลบจุดนี้ใช่หรือไม่?')) return;
+    showLoading("กำลังลบ...");
+    await supabaseClient.from('bolter_points').delete().eq('id', id);
+    hideLoading();
+    loadPointsFromSupabase();
+  }
 
-    const now = Date.now();
-    let remaining, total, ringColor, phaseText, statusText = "";
+  // อัปโหลดรูปภาพไปยัง Supabase Storage
+  async function uploadImage(pointId, file) {
+    showLoading("กำลังอัปโหลดรูปภาพขึ้นคลาวด์...");
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${pointId}_${Math.random()}.${fileExt}`;
+    const filePath = `${fileName}`;
 
-    if(p.state === "phase1"){
-      remaining = Math.max(0, p.endTime - now);
-      total = PHASE1_DURATION;
-      ringColor = "var(--p1)";
-      phaseText = "เฟส 1 · คูลดาวน์";
-      statusText = "กำลังนับเวลาคูลดาวน์...";
-      el.classList.remove("alerting");
-    } else if(p.state === "phase2"){
-      remaining = Math.max(0, p.endTime - now);
-      total = PHASE2_DURATION;
-      const inAlert = remaining <= ALERT_THRESHOLD;
-      ringColor = inAlert ? "var(--alert)" : "var(--p2)";
-      phaseText = "เฟส 2 · สแตนด์บาย";
-      statusText = inAlert ? "ไปรอที่จุดจกได้เลย!" : "รอหุ่นเกิดใหม่...";
-
-      if(inAlert){
-        el.classList.add("alerting");
-        if(!p.alertPlaying){
-          p.alertPlaying = true;
-          playAlertPulse();
-          notifyAlert(p.name);
-        }
-      } else {
-        el.classList.remove("alerting");
-        p.alertPlaying = false;
-      }
-    } else {
-      remaining = PHASE1_DURATION;
-      total = PHASE1_DURATION;
-      ringColor = "var(--muted-2)";
-      phaseText = "รอเริ่ม";
-      statusText = "กดเริ่มเพื่อรัน Auto Loop";
-      el.classList.remove("alerting");
-      p.alertPlaying = false;
+    const { error: uploadError } = await supabaseClient.storage.from('bolter-images').upload(filePath, file);
+    if (uploadError) {
+      hideLoading();
+      alert('อัปโหลดรูปไม่สำเร็จ: ' + uploadError.message);
+      return;
     }
 
-    el.dataset.state = p.state;
-    digitsEl.textContent = fmt(remaining);
-    phaseLabelEl.textContent = phaseText;
-    statusEl.textContent = statusText;
+    const { data } = supabaseClient.storage.from('bolter-images').getPublicUrl(filePath);
+    const publicUrl = data.publicUrl;
 
-    const frac = total > 0 ? Math.min(1, Math.max(0, remaining / total)) : 0;
-    const offset = p.state === "idle" ? CIRC : CIRC * (1 - frac);
-    ringEl.style.stroke = ringColor;
-    ringEl.style.strokeDashoffset = offset;
+    await updatePointInDB(pointId, { image_url: publicUrl });
+    hideLoading();
+    loadPointsFromSupabase();
+  }
 
-    if(p.state === "idle"){
-      actionsEl.innerHTML = `<button class="btn btn-start" data-action="start" data-id="${p.id}">เริ่มจับเวลา</button>`;
-    } else {
-      actionsEl.innerHTML = `
-        <div class="time-adjust-bar">
-          <button class="btn-adj" data-action="adjust" data-ms="-60000" data-id="${p.id}" title="ลด 1 นาที">-1m</button>
-          <button class="btn-adj" data-action="adjust" data-ms="-30000" data-id="${p.id}" title="ลด 30 วิ">-30s</button>
-          <button class="btn-adj" data-action="adjust" data-ms="30000" data-id="${p.id}" title="เพิ่ม 30 วิ">+30s</button>
-          <button class="btn-adj" data-action="adjust" data-ms="60000" data-id="${p.id}" title="เพิ่ม 1 นาที">+1m</button>
+  // เรนเดอร์หน้าจอ
+  function renderGrid() {
+    const grid = document.getElementById('pointsGrid');
+    if (pointsData.length === 0) {
+      grid.innerHTML = `<div class="empty-state"><span class="big">ยังไม่มีจุดจับเวลาในระบบ</span>พิมพ์ชื่อจุดด้านบนแล้วกดเพิ่ม เพื่อเริ่มใช้งานได้ทันที</div>`;
+      return;
+    }
+
+    grid.innerHTML = '';
+    pointsData.forEach(p => {
+      const card = document.createElement('div');
+      card.className = `card`;
+      card.setAttribute('data-state', p.state);
+
+      const now = Math.floor(Date.now() / 1000);
+      const remaining = Math.max(0, p.endTime - now);
+      const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+      const ss = String(remaining % 60).padStart(2, '0');
+
+      let totalDuration = p.state === 'phase1' ? PHASE1_DURATION : PHASE2_DURATION;
+      let progress = Math.max(0, Math.min(1, remaining / totalDuration));
+      let dashOffset = 440 * (1 - progress);
+
+      let phaseText = p.state === 'phase1' ? 'ช่วงที่ 1 (30 นาที)' : 'ช่วงที่ 2 (15 นาที)';
+      let statusText = remaining > 0 ? 'กำลังนับถอยหลัง...' : 'หมดเวลา!';
+
+      card.innerHTML = `
+        <div class="corner-bl"></div><div class="corner-br"></div>
+        <div class="card-top">
+          <div style="flex:1;">
+            ${p.isEditing ? 
+              `<input type="text" class="name-edit-input" id="edit-input-${p.id}" value="${p.name}" />` :
+              `<div class="point-name">${p.name}</div>`
+            }
+          </div>
+          <div class="card-top-actions">
+            ${p.isEditing ? 
+              `<button class="btn-icon btn-edit" title="บันทึก" onclick="saveName(${p.id})">✓</button>` :
+              `<button class="btn-icon btn-edit" title="แก้ไขชื่อ" onclick="toggleEdit(${p.id})">✎</button>`
+            }
+            <button class="btn-icon btn-del" title="ลบ" onclick="deletePoint(${p.id})">✕</button>
+          </div>
         </div>
-        <button class="btn btn-reset" data-action="reset" data-id="${p.id}">หยุด / รีเซ็ต</button>
+
+        <div class="card-image-box">
+          ${p.imageUrl ? 
+            `<img src="${p.imageUrl}" onclick="window.open('${p.imageUrl}', '_blank')" />` :
+            `<label class="upload-label">
+               <span>+ อัปโหลดรูปภาพ</span>
+               <input type="file" accept="image/*" onchange="handleImageUpload(event, ${p.id})" />
+             </label>`
+          }
+        </div>
+
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 160 160">
+            <circle class="ring-track" cx="80" cy="80" r="70"></circle>
+            <circle class="ring-progress" cx="80" cy="80" r="70" style="stroke-dasharray:440; stroke-dashoffset:${dashOffset}; stroke:${p.state==='phase1'?'var(--p1)':'var(--p2)'};"></circle>
+          </svg>
+          <div class="ring-center">
+            <div class="digits">${mm}:${ss}</div>
+            <div class="phase-label">${phaseText}</div>
+          </div>
+        </div>
+
+        <div class="status-line">${statusText}</div>
+
+        <div class="card-actions">
+          <div class="time-adjust-bar">
+            <button class="btn-adj" onclick="adjustTime(${p.id}, -300)">-5m</button>
+            <button class="btn-adj" onclick="adjustTime(${p.id}, -60)">-1m</button>
+            <button class="btn-adj" onclick="adjustTime(${p.id}, 60)">+1m</button>
+            <button class="btn-adj" onclick="adjustTime(${p.id}, 300)">+5m</button>
+          </div>
+          <button class="btn-main-action" onclick="togglePhase(${p.id})">สลับเฟส / รีเซ็ตเวลา</button>
+        </div>
       `;
-    }
-  }
-
-  function showImageModal(id){
-    const p = points.find(x => x.id === id);
-    if(!p || !p.image) return;
-    modalImg.src = p.image;
-    modalTitle.textContent = p.name;
-    modal.classList.add("active");
-  }
-
-  function hideImageModal(){
-    modal.classList.remove("active");
-    modalImg.src = "";
-  }
-
-  closeModalBtn.addEventListener("click", hideImageModal);
-  modal.addEventListener("click", (e) => {
-    if(e.target === modal) hideImageModal();
-  });
-
-  // จัดการอัปโหลดรูปผ่านช่องในการ์ดแต่ละใบ
-  grid.addEventListener("change", (e) => {
-    if(e.target.classList.contains("card-file-input")){
-      const file = e.target.files[0];
-      const id = e.target.dataset.id;
-      if(!file || !id) return;
-      const reader = new FileReader();
-      reader.onload = function(evt){
-        updatePointImage(id, evt.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  grid.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-action]");
-    if(!btn) return;
-    const id = btn.dataset.id;
-    const action = btn.dataset.action;
-    if(action === "start") startPoint(id);
-    else if(action === "reset") resetPoint(id);
-    else if(action === "delete") deletePoint(id);
-    else if(action === "edit") startEditName(id);
-    else if(action === "showimage") showImageModal(id);
-    else if(action === "adjust"){
-      const ms = parseInt(btn.dataset.ms, 10);
-      adjustTime(id, ms);
-    }
-  });
-
-  addBtn.addEventListener("click", () => {
-    const name = nameInput.value.trim();
-    if(!name) { nameInput.focus(); return; }
-    ensureAudio();
-    ensureNotifyPermission();
-    addPoint(name);
-    nameInput.value = "";
-    nameInput.focus();
-  });
-  nameInput.addEventListener("keydown", (e) => {
-    if(e.key === "Enter") addBtn.click();
-  });
-
-  function updateTabTitle(){
-    const now = Date.now();
-    let soonest = null;
-    points.forEach(p => {
-      if((p.state === "phase1" || p.state === "phase2") && p.endTime !== null){
-        const remaining = p.endTime - now;
-        if(soonest === null || remaining < soonest.remaining){
-          soonest = { remaining, name: p.name };
-        }
-      }
+      grid.appendChild(card);
     });
-    if(soonest === null){
-      document.title = DEFAULT_TITLE;
-    } else {
-      document.title = `${fmt(Math.max(0, soonest.remaining))} · ${soonest.name}`;
+  }
+
+  function toggleEdit(id) {
+    pointsData = pointsData.map(p => p.id === id ? {...p, isEditing: true} : p);
+    renderGrid();
+  }
+
+  async function saveName(id) {
+    const input = document.getElementById(`edit-input-${id}`);
+    const newName = input.value.trim();
+    if (!newName) return;
+    showLoading("กำลังบันทึกชื่อ...");
+    await updatePointInDB(id, { name: newName });
+    hideLoading();
+    loadPointsFromSupabase();
+  }
+
+  function handleImageUpload(event, id) {
+    const file = event.target.files[0];
+    if (file) {
+      uploadImage(id, file);
     }
   }
 
-  function tick(){
-    let needSave = false;
-    points.forEach(p => { while(syncPoint(p)){ needSave = true; } });
-    if(needSave) save();
-    render();
-    updateTabTitle();
+  async function adjustTime(id, seconds) {
+    const p = pointsData.find(item => item.id === id);
+    if (!p) return;
+    p.endTime += seconds;
+    renderGrid();
+    await updatePointInDB(id, { end_time: p.endTime });
   }
 
-  load();
-  points.forEach(p => { while(syncPoint(p)){} });
-  render(true);
-  updateTabTitle();
-  setInterval(tick, 1000);
+  async function togglePhase(id) {
+    const p = pointsData.find(item => item.id === id);
+    if (!p) return;
+    const now = Math.floor(Date.now() / 1000);
+    if (p.state === 'phase1') {
+      p.state = 'phase2';
+      p.endTime = now + PHASE2_DURATION;
+    } else {
+      p.state = 'phase1';
+      p.endTime = now + PHASE1_DURATION;
+    }
+    renderGrid();
+    await updatePointInDB(id, { state: p.state, end_time: p.endTime });
+  }
 
-})();
+  document.getElementById('addPointBtn').addEventListener('click', addPoint);
+  document.getElementById('pointNameInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addPoint();
+  });
+
+  // รันระบบนับถอยหลังทุกๆ 1 วินาที
+  setInterval(() => {
+    if (pointsData.length > 0) renderGrid();
+  }, 1000);
+
+  // โหลดข้อมูลเริ่มต้นเมื่อเปิดหน้าเว็บ
+  loadPointsFromSupabase();
 </script>
 </body>
 </html>
