@@ -277,14 +277,13 @@
   .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
 
   .name-edit-input{
-    flex:1;
-    min-width: 0;
+    width: 100%;
     background: var(--bg);
     border: 1px solid var(--p1);
     color: var(--text);
     font-family: var(--font-display);
     font-weight: 600;
-    font-size: 16px;
+    font-size: 15px;
     letter-spacing: .5px;
     padding: 4px 8px;
     border-radius: 4px;
@@ -395,7 +394,7 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      กดเริ่มนับหลังจกเสร็จ (คูลดาวน์ 5:30 นาที + รอเกิดฟิกซ์ 8:30 นาที) ครบเวลาระบบจะกลับสู่สถานะรอเริ่มให้อัตโนมัติ
+      ระบบ Auto Loop: กดเริ่มครั้งเดียว ระบบจะนับถอยหลังลูปคูลดาวน์ (5:30m) + รอเกิด (8:30m) ต่อเนื่องให้อัตโนมัติ
     </div>
   </header>
 
@@ -413,10 +412,10 @@
 (function(){
   "use strict";
 
-  const PHASE1_DURATION = (5 * 60 + 30) * 1000; // คูลดาวน์ 5:30 นาที
-  const PHASE2_DURATION = (8 * 60 + 30) * 1000; // ฟิกเวลารอเกิด 8:30 นาที
-  const ALERT_THRESHOLD = 30 * 1000;            // เตือน 30 วินาทีสุดท้าย
-  const STORAGE_KEY = "bolterLoopPoints_v6";
+  const PHASE1_DURATION = (5 * 60 + 30) * 1000;
+  const PHASE2_DURATION = (8 * 60 + 30) * 1000;
+  const ALERT_THRESHOLD = 30 * 1000;
+  const STORAGE_KEY = "bolterLoopPoints_v8";
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
@@ -424,6 +423,7 @@
   const DEFAULT_TITLE = document.title;
 
   let points = [];
+  let editingId = null;
 
   function ensureNotifyPermission(){
     if("Notification" in window && Notification.permission === "default"){
@@ -497,13 +497,14 @@
       alertPlaying: false
     });
     save();
-    render();
+    render(true);
   }
 
   function deletePoint(id){
     points = points.filter(p => p.id !== id);
+    if(editingId === id) editingId = null;
     save();
-    render();
+    render(true);
   }
 
   function startPoint(id){
@@ -533,23 +534,19 @@
     if(!p) return;
     p.name = newName;
     save();
-    render();
+    editingId = null;
+    render(true);
   }
 
   function startEditName(id){
+    editingId = id;
+    render(true);
+
     const el = grid.querySelector(`.card[data-id="${id}"]`);
     if(!el) return;
-    const nameEl = el.querySelector('[data-role="nameText"]');
-    if(!nameEl) return;
-    const p = points.find(x => x.id === id);
-    const currentName = p ? p.name : "";
+    const input = el.querySelector('.name-edit-input');
+    if(!input) return;
 
-    const input = document.createElement("input");
-    input.type = "text";
-    input.className = "name-edit-input";
-    input.maxLength = 40;
-    input.value = currentName;
-    nameEl.replaceWith(input);
     input.focus();
     input.select();
 
@@ -557,16 +554,18 @@
     function commit(){
       if(settled) return;
       settled = true;
-      const newName = input.value.trim() || currentName;
+      const newName = input.value.trim() || (points.find(x => x.id === id)?.name || "");
       renamePoint(id, newName);
     }
 
     input.addEventListener("keydown", (e) => {
       if(e.key === "Enter"){ e.preventDefault(); commit(); }
+      if(e.key === "Escape"){ settled = true; editingId = null; render(true); }
     });
     input.addEventListener("blur", commit);
   }
 
+  // ระบบ Auto Loop: สลับเฟส 1 -> เฟส 2 -> วนกลับ เฟส 1 ทันที
   function syncPoint(p){
     const now = Date.now();
     let changed = false;
@@ -574,11 +573,12 @@
     if(p.state === "phase1" && p.endTime !== null && now >= p.endTime){
       p.state = "phase2";
       p.endTime = p.endTime + PHASE2_DURATION;
+      p.alertPlaying = false;
       changed = true;
     }
     if(p.state === "phase2" && p.endTime !== null && now >= p.endTime){
-      p.state = "idle";
-      p.endTime = null;
+      p.state = "phase1";
+      p.endTime = p.endTime + PHASE1_DURATION; // วนกลับไปเริ่มนับคูลดาวน์ 5:30 นาทีต่อทันที
       p.alertPlaying = false;
       changed = true;
     }
@@ -597,12 +597,17 @@
   const CIRC = 2 * Math.PI * RADIUS;
 
   function cardTemplate(p){
+    const isEditing = p.id === editingId;
+    const titleHtml = isEditing 
+      ? `<input type="text" class="name-edit-input" value="${escapeHtml(p.name)}" maxlength="40" />`
+      : `<div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>`;
+
     return `
       <div class="corner-bl"></div>
       <div class="corner-br"></div>
       <div class="card-top">
-        <div>
-          <div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>
+        <div style="flex:1; min-width:0;">
+          ${titleHtml}
           <div class="point-config">เวลารอเกิด: 8:30 นาที</div>
         </div>
         <div class="card-top-actions">
@@ -634,9 +639,9 @@
 
   let renderedIds = [];
 
-  function render(){
+  function render(forceRebuild = false){
     const currentIds = points.map(p => p.id);
-    const structureChanged = currentIds.length !== renderedIds.length ||
+    const structureChanged = forceRebuild || currentIds.length !== renderedIds.length ||
       currentIds.some((id, i) => id !== renderedIds[i]);
 
     if(points.length === 0){
@@ -707,7 +712,7 @@
       total = PHASE1_DURATION;
       ringColor = "var(--muted-2)";
       phaseText = "รอเริ่ม";
-      statusText = "กดเริ่มจับเวลาทันทีที่จก Bolter เสร็จ";
+      statusText = "กดเริ่มเพื่อรัน Auto Loop";
       el.classList.remove("alerting");
       p.alertPlaying = false;
     }
@@ -725,7 +730,7 @@
     if(p.state === "idle"){
       actionsEl.innerHTML = `<button class="btn btn-start" data-action="start" data-id="${p.id}">เริ่มจับเวลา</button>`;
     } else {
-      actionsEl.innerHTML = `<button class="btn btn-reset" data-action="reset" data-id="${p.id}">รีเซ็ต</button>`;
+      actionsEl.innerHTML = `<button class="btn btn-reset" data-action="reset" data-id="${p.id}">หยุด / รีเซ็ต</button>`;
     }
   }
 
@@ -781,7 +786,7 @@
 
   load();
   points.forEach(p => { while(syncPoint(p)){} });
-  render();
+  render(true);
   updateTabTitle();
   setInterval(tick, 1000);
 
