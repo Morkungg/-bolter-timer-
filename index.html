@@ -281,7 +281,7 @@
   .btn-icon.btn-edit:hover{ border-color: var(--p1); color: var(--p1); }
   .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
 
-  /* ช่องรูปภาพประจำการ์ด ตรงกลางสวยๆ */
+  /* ช่องรูปภาพประจำการ์ด */
   .card-image-box {
     width: 100%;
     height: 120px;
@@ -331,7 +331,6 @@
     display: none;
   }
 
-
   .card-image-box.has-image{
     border-style: solid;
   }
@@ -342,6 +341,12 @@
     inset:0;
     pointer-events:none;
     box-shadow: inset 0 0 0 1px rgba(63,214,200,0.06);
+  }
+
+  .image-loading-text{
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
   }
 
   .image-change-btn{
@@ -532,7 +537,7 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      ระบบจับเวลาวนลูปอัตโนมัติ เพิ่มชื่อจุดแล้วคลิกอัปโหลดรูปภาพได้โดยตรงบนการ์ด
+      ระบบจับเวลาวนลูปอัตโนมัติ เพิ่มชื่อจุดแล้วคลิกอัปโหลดรูปภาพได้โดยตรงบนการ์ด (รูปเก็บแยกต่างหาก รองรับได้หลายสิบรูป)
     </div>
   </header>
 
@@ -543,7 +548,7 @@
 
   <div class="grid" id="pointsGrid"></div>
 
-  <footer>BOLTER-TIMER &middot; ข้อมูลและรูปภาพบันทึกในเครื่องนี้ (LocalStorage)</footer>
+  <footer>BOLTER-TIMER &middot; ข้อมูลบันทึกในเครื่องนี้ (LocalStorage + IndexedDB)</footer>
 </div>
 
 <!-- Modal สำหรับแสดงรูปภาพขนาดใหญ่ -->
@@ -579,6 +584,97 @@
 
   let points = [];
   let editingId = null;
+
+  // ---------- Image storage (IndexedDB, not localStorage) ----------
+  // localStorage is capped around 5-10MB total. Images are kept in IndexedDB instead,
+  // which comfortably holds dozens of compressed photos. Only a small "hasImage" flag
+  // lives in the localStorage point record.
+  const DB_NAME = "BolterLoopImagesDB";
+  const DB_VERSION = 1;
+  const STORE_NAME = "images";
+  let dbPromise = null;
+  const imageCache = new Map(); // in-memory cache: id -> dataURL, avoids re-reading IDB every render
+
+  function getDB(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      if(!("indexedDB" in window)){ reject(new Error("no indexeddb")); return; }
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(STORE_NAME)){
+          db.createObjectStore(STORE_NAME);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return dbPromise;
+  }
+  async function idbSetImage(id, dataUrl){
+    try{
+      const db = await getDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        tx.objectStore(STORE_NAME).put(dataUrl, id);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }catch(e){ return false; }
+  }
+  async function idbGetImage(id){
+    try{
+      const db = await getDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const req = tx.objectStore(STORE_NAME).get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }catch(e){ return null; }
+  }
+  async function idbDeleteImage(id){
+    try{
+      const db = await getDB();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        tx.objectStore(STORE_NAME).delete(id);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }catch(e){ return false; }
+  }
+
+  // Resize + re-encode the photo before storing so 20+ images stay small and fast to load.
+  function compressImage(file, maxDim, quality){
+    maxDim = maxDim || 900;
+    quality = quality || 0.82;
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        let width = img.width, height = img.height;
+        if(width > maxDim || height > maxDim){
+          if(width > height){
+            height = Math.round(height * (maxDim / width));
+            width = maxDim;
+          } else {
+            width = Math.round(width * (maxDim / height));
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    });
+  }
 
   function ensureNotifyPermission(){
     if("Notification" in window && Notification.permission === "default"){
@@ -638,6 +734,24 @@
     if(!Array.isArray(points)) points = [];
   }
 
+  // One-time migration: older versions stored the image as raw base64 directly on
+  // the point object (p.image). Move any of those into IndexedDB so nothing is lost.
+  async function migrateOldInlineImages(){
+    let didMigrate = false;
+    for(const p of points){
+      if(p.image){
+        const ok = await idbSetImage(p.id, p.image);
+        if(ok){
+          imageCache.set(p.id, p.image);
+          p.hasImage = true;
+        }
+        delete p.image;
+        didMigrate = true;
+      }
+    }
+    if(didMigrate) save();
+  }
+
   function uid(){
     if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
@@ -647,7 +761,7 @@
     points.push({
       id: uid(),
       name: name,
-      image: null,
+      hasImage: false,
       state: "idle",
       endTime: null,
       alertPlaying: false
@@ -659,14 +773,22 @@
   function deletePoint(id){
     points = points.filter(p => p.id !== id);
     if(editingId === id) editingId = null;
+    imageCache.delete(id);
+    idbDeleteImage(id);
     save();
     render(true);
   }
 
-  function updatePointImage(id, imageData){
+  async function updatePointImage(id, dataUrl){
     const p = points.find(x => x.id === id);
     if(!p) return;
-    p.image = imageData;
+    const ok = await idbSetImage(id, dataUrl);
+    if(!ok){
+      alert("บันทึกรูปไม่สำเร็จ ลองใหม่อีกครั้ง หรือเบราว์เซอร์นี้อาจไม่รองรับ IndexedDB");
+      return;
+    }
+    imageCache.set(id, dataUrl);
+    p.hasImage = true;
     save();
     render(true);
   }
@@ -767,27 +889,41 @@
   const RADIUS = 68;
   const CIRC = 2 * Math.PI * RADIUS;
 
-  function cardTemplate(p){
-    const isEditing = p.id === editingId;
-    const titleHtml = isEditing 
-      ? `<input type="text" class="name-edit-input" value="${escapeHtml(p.name)}" maxlength="40" />`
-      : `<div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>`;
-
-    const imageBoxHtml = p.image
-      ? `<div class="card-image-box has-image">
-           <img src="${p.image}" alt="Point Image" data-action="showimage" data-id="${p.id}" title="คลิกเพื่อขยายรูป" />
+  function imageBoxHtml(p){
+    if(p.hasImage && imageCache.has(p.id)){
+      const src = imageCache.get(p.id);
+      return `<div class="card-image-box has-image" data-role="imageBox">
+           <img src="${src}" alt="Point Image" data-action="showimage" data-id="${p.id}" title="คลิกเพื่อขยายรูป" />
            <label class="btn-icon image-change-btn" title="เปลี่ยนรูปภาพ">
              📷
              <input type="file" class="card-file-input" data-id="${p.id}" accept="image/*" />
            </label>
-         </div>`
-      : `<div class="card-image-box">
+         </div>`;
+    }
+    if(p.hasImage){
+      // Known to have an image, still being fetched from IndexedDB
+      return `<div class="card-image-box has-image" data-role="imageBox">
+           <span class="image-loading-text">กำลังโหลดรูป...</span>
+           <label class="btn-icon image-change-btn" title="เปลี่ยนรูปภาพ">
+             📷
+             <input type="file" class="card-file-input" data-id="${p.id}" accept="image/*" />
+           </label>
+         </div>`;
+    }
+    return `<div class="card-image-box" data-role="imageBox">
            <label class="upload-label">
              <span style="font-size:18px;">📷</span>
              <span>คลิกเพื่อเพิ่มรูปภาพจุด</span>
              <input type="file" class="card-file-input" data-id="${p.id}" accept="image/*" />
            </label>
          </div>`;
+  }
+
+  function cardTemplate(p){
+    const isEditing = p.id === editingId;
+    const titleHtml = isEditing
+      ? `<input type="text" class="name-edit-input" value="${escapeHtml(p.name)}" maxlength="40" />`
+      : `<div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>`;
 
     return `
       <div class="corner-bl"></div>
@@ -802,7 +938,7 @@
           <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้">✕</button>
         </div>
       </div>
-      ${imageBoxHtml}
+      ${imageBoxHtml(p)}
       <div class="ring-wrap">
         <svg class="ring" viewBox="0 0 160 160">
           <circle class="ring-track" cx="80" cy="80" r="${RADIUS}"></circle>
@@ -853,7 +989,22 @@
       renderedIds = currentIds;
     }
 
-    points.forEach(p => updateCard(p));
+    points.forEach(p => {
+      updateCard(p);
+      ensureImageLoaded(p);
+    });
+  }
+
+  // Lazily fetch any image that's flagged as present but not yet in memory,
+  // then patch just that card's image box in place once it arrives.
+  function ensureImageLoaded(p){
+    if(!p.hasImage || imageCache.has(p.id)) return;
+    idbGetImage(p.id).then(dataUrl => {
+      if(!dataUrl) return;
+      imageCache.set(p.id, dataUrl);
+      const box = grid.querySelector(`.card[data-id="${p.id}"] [data-role="imageBox"]`);
+      if(box) box.outerHTML = imageBoxHtml(p);
+    });
   }
 
   function updateCard(p){
@@ -932,8 +1083,10 @@
 
   function showImageModal(id){
     const p = points.find(x => x.id === id);
-    if(!p || !p.image) return;
-    modalImg.src = p.image;
+    if(!p || !p.hasImage) return;
+    const src = imageCache.get(id);
+    if(!src) return; // still loading from IndexedDB
+    modalImg.src = src;
     modalTitle.textContent = p.name;
     modal.classList.add("active");
   }
@@ -948,17 +1101,17 @@
     if(e.target === modal) hideImageModal();
   });
 
-  // จัดการอัปโหลดรูปผ่านช่องในการ์ดแต่ละใบ
+  // จัดการอัปโหลดรูปผ่านช่องในการ์ดแต่ละใบ (บีบอัดก่อนเก็บลง IndexedDB)
   grid.addEventListener("change", (e) => {
     if(e.target.classList.contains("card-file-input")){
       const file = e.target.files[0];
       const id = e.target.dataset.id;
       if(!file || !id) return;
-      const reader = new FileReader();
-      reader.onload = function(evt){
-        updatePointImage(id, evt.target.result);
-      };
-      reader.readAsDataURL(file);
+      compressImage(file).then(dataUrl => {
+        updatePointImage(id, dataUrl);
+      }).catch(() => {
+        alert("โหลดรูปไม่สำเร็จ ลองใหม่อีกครั้ง");
+      });
     }
   });
 
@@ -1017,11 +1170,15 @@
     updateTabTitle();
   }
 
-  load();
-  points.forEach(p => { while(syncPoint(p)){} });
-  render(true);
-  updateTabTitle();
-  setInterval(tick, 1000);
+  async function init(){
+    load();
+    await migrateOldInlineImages();
+    points.forEach(p => { while(syncPoint(p)){} });
+    render(true);
+    updateTabTitle();
+    setInterval(tick, 1000);
+  }
+  init();
 
 })();
 </script>
