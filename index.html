@@ -219,9 +219,9 @@
   .card[data-state="phase2"]::before, .card[data-state="phase2"]::after,
   .card[data-state="phase2"] .corner-bl, .card[data-state="phase2"] .corner-br{ border-color: var(--p2); }
 
-  .card[data-state="ready"]{ border-color: rgba(88,227,122,0.5); }
-  .card[data-state="ready"]::before, .card[data-state="ready"]::after,
-  .card[data-state="ready"] .corner-bl, .card[data-state="ready"] .corner-br{ border-color: var(--ready); }
+  .card[data-state="grace"]{ border-color: rgba(88,227,122,0.5); }
+  .card[data-state="grace"]::before, .card[data-state="grace"]::after,
+  .card[data-state="grace"] .corner-bl, .card[data-state="grace"] .corner-br{ border-color: var(--ready); }
 
   .card.alerting{
     animation: alertBg 0.9s infinite;
@@ -255,7 +255,13 @@
     line-height:1.3;
   }
 
-  .btn-del{
+  .card-top-actions{
+    display:flex;
+    gap: 6px;
+    flex-shrink:0;
+  }
+
+  .btn-icon{
     background: transparent;
     border: 1px solid var(--line);
     color: var(--muted);
@@ -265,10 +271,28 @@
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0;
     transition: border-color .15s, color .15s;
-    font-size: 14px;
+    font-size: 13px;
     line-height:1;
+    padding:0;
   }
-  .btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
+  .btn-icon.btn-edit:hover{ border-color: var(--p1); color: var(--p1); }
+  .btn-icon.btn-del:hover{ border-color: var(--alert-2); color: var(--alert-2); }
+
+  .name-edit-input{
+    flex:1;
+    min-width: 0;
+    background: var(--bg);
+    border: 1px solid var(--p1);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: .5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    outline: none;
+    box-shadow: 0 0 0 3px var(--p1-glow);
+  }
 
   .ring-wrap{
     position: relative;
@@ -318,7 +342,7 @@
   }
   .card[data-state="phase1"] .status-line{ color: var(--p1); }
   .card[data-state="phase2"] .status-line{ color: var(--p2); }
-  .card[data-state="ready"] .status-line{ color: var(--ready); }
+  .card[data-state="grace"] .status-line{ color: var(--ready); }
   .card.alerting .status-line{ color: var(--alert); font-weight:700; }
 
   .card-actions{
@@ -381,8 +405,8 @@
     <div class="eyebrow">FIVEM &middot; JOB TIMER UTILITY</div>
     <h1>BOLTER <span class="accent">LOOP</span> HELPER</h1>
     <div class="subtitle">
-      กด "เริ่มจับเวลา" ทันทีหลังกด E จก Bolter เสร็จ ระบบจะนับถอยหลัง 5 นาที (คูลดาวน์) แล้วสลับไปนับ 10 นาที (รอเกิด) ต่อเองอัตโนมัติ
-      เมื่อเหลือ 30 วินาทีสุดท้ายการ์ดจะกะพริบเหลืองพร้อมเสียงเตือนให้วิ่งไปรอจุดจก
+      กด "เริ่มจับเวลา" ทันทีหลังกด E จก Bolter เสร็จ ระบบจะนับถอยหลัง 5 นาที (คูลดาวน์) แล้วสลับไปนับ 10 นาที 30 วินาที (รอเกิด) ต่อเองอัตโนมัติ
+      เมื่อเหลือ 30 วินาทีสุดท้ายการ์ดจะกะพริบเหลืองพร้อมเสียงเตือนให้วิ่งไปรอจุดจก พอครบแล้วระบบจะรออีก 30 วินาทีแล้ววนกลับไปคูลดาวน์รอบใหม่ให้เองอัตโนมัติ ไม่ต้องกดเริ่มซ้ำอีก
     </div>
   </header>
 
@@ -401,17 +425,36 @@
   "use strict";
 
   const PHASE1_DURATION = 5 * 60 * 1000;   // 5 minutes
-  const PHASE2_DURATION = 10 * 60 * 1000;  // 10 minutes
+  const PHASE2_DURATION = (10 * 60 + 30) * 1000;  // 10 minutes 30 seconds (matches actual in-game spawn timing)
+  const GRACE_DURATION = 30 * 1000;        // pause after spawn before auto-looping back into Phase 1
   const ALERT_THRESHOLD = 30 * 1000;       // last 30 seconds of phase 2
-  const READY_FLASH_MS = 12 * 1000;        // how long the "ready" flash shows after phase2 completes
   const STORAGE_KEY = "bolterLoopPoints_v1";
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
   const addBtn = document.getElementById("addPointBtn");
+  const DEFAULT_TITLE = document.title;
 
-  /** @type {Array<{id:string,name:string,state:string,endTime:number|null,readyUntil:number|null,alertPlaying:boolean}>} */
+  /** @type {Array<{id:string,name:string,state:string,endTime:number|null,alertPlaying:boolean}>} */
   let points = [];
+
+  // ---------- Notifications ----------
+  function ensureNotifyPermission(){
+    if("Notification" in window && Notification.permission === "default"){
+      Notification.requestPermission();
+    }
+  }
+  function notifyAlert(pointName){
+    if(!("Notification" in window)) return;
+    if(Notification.permission !== "granted") return;
+    if(!document.hidden) return; // only nudge them when they're not already looking at the tab
+    try{
+      new Notification("BOLTER LOOP HELPER", {
+        body: `${pointName} — เหลือ 30 วินาที ไปรอจุดจกได้เลย!`,
+        tag: "bolter-alert-" + pointName,
+      });
+    }catch(e){ /* notifications unsupported/blocked */ }
+  }
 
   // ---------- Audio ----------
   let audioCtx = null;
@@ -469,9 +512,8 @@
     points.push({
       id: uid(),
       name: name,
-      state: "phase1",      // idle | phase1 | phase2
+      state: "phase1",      // idle | phase1 | phase2 | grace
       endTime: Date.now() + PHASE1_DURATION,
-      readyUntil: null,     // timestamp until which the "ready" flash shows
       alertPlaying: false
     });
     save();
@@ -486,11 +528,11 @@
 
   function startPoint(id){
     ensureAudio();
+    ensureNotifyPermission();
     const p = points.find(x => x.id === id);
     if(!p) return;
     p.state = "phase1";
     p.endTime = Date.now() + PHASE1_DURATION;
-    p.readyUntil = null;
     p.alertPlaying = false;
     save();
     render();
@@ -501,34 +543,93 @@
     if(!p) return;
     p.state = "idle";
     p.endTime = null;
-    p.readyUntil = null;
     p.alertPlaying = false;
     save();
     render();
   }
 
-  // Cascade a point's phase forward based on elapsed real time (handles closed-tab / backgrounded cases)
+  function renamePoint(id, newName){
+    const p = points.find(x => x.id === id);
+    if(!p) return;
+    p.name = newName;
+    save();
+    // Patch the DOM directly so the running timer/render loop isn't disrupted mid-edit.
+    const el = grid.querySelector(`.card[data-id="${id}"]`);
+    if(el){
+      const input = el.querySelector(".name-edit-input");
+      const target = input || el.querySelector('[data-role="nameText"]');
+      if(target){
+        const div = document.createElement("div");
+        div.className = "point-name";
+        div.dataset.role = "nameText";
+        div.textContent = newName;
+        target.replaceWith(div);
+      }
+    }
+  }
+
+  function startEditName(id){
+    const el = grid.querySelector(`.card[data-id="${id}"]`);
+    if(!el) return;
+    const nameEl = el.querySelector('[data-role="nameText"]');
+    if(!nameEl) return; // already editing
+    const p = points.find(x => x.id === id);
+    const currentName = p ? p.name : "";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "name-edit-input";
+    input.maxLength = 40;
+    input.value = currentName;
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let settled = false;
+
+    function commit(){
+      if(settled) return;
+      settled = true;
+      const newName = input.value.trim() || currentName;
+      renamePoint(id, newName);
+    }
+    function cancel(){
+      if(settled) return;
+      settled = true;
+      const div = document.createElement("div");
+      div.className = "point-name";
+      div.dataset.role = "nameText";
+      div.textContent = currentName;
+      input.replaceWith(div);
+    }
+
+    input.addEventListener("keydown", (e) => {
+      if(e.key === "Enter"){ e.preventDefault(); commit(); }
+      else if(e.key === "Escape"){ e.preventDefault(); cancel(); }
+    });
+    input.addEventListener("blur", commit);
+  }
+
+  // Cascade a point's phase forward based on elapsed real time (handles closed-tab / backgrounded cases).
+  // The loop is fully automatic once started: phase1 -> phase2 -> grace (30s) -> phase1 again...
   function syncPoint(p){
     const now = Date.now();
     let changed = false;
 
     if(p.state === "phase1" && p.endTime !== null && now >= p.endTime){
-      const overshoot = now - p.endTime;
       p.state = "phase2";
       p.endTime = p.endTime + PHASE2_DURATION;
       changed = true;
-      // if overshoot already blew past phase2 too, the loop below (re-run) handles it
-      void overshoot;
     }
     if(p.state === "phase2" && p.endTime !== null && now >= p.endTime){
-      p.state = "idle";
-      p.endTime = null;
-      p.readyUntil = now + READY_FLASH_MS;
+      p.state = "grace";
+      p.endTime = p.endTime + GRACE_DURATION;
       p.alertPlaying = false;
       changed = true;
     }
-    if(p.state === "idle" && p.readyUntil !== null && now >= p.readyUntil){
-      p.readyUntil = null;
+    if(p.state === "grace" && p.endTime !== null && now >= p.endTime){
+      p.state = "phase1";
+      p.endTime = p.endTime + PHASE1_DURATION;
       changed = true;
     }
     return changed;
@@ -551,8 +652,11 @@
       <div class="corner-bl"></div>
       <div class="corner-br"></div>
       <div class="card-top">
-        <div class="point-name">${escapeHtml(p.name)}</div>
-        <button class="btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้" aria-label="ลบจุดนี้">✕</button>
+        <div class="point-name" data-role="nameText">${escapeHtml(p.name)}</div>
+        <div class="card-top-actions">
+          <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ" aria-label="แก้ไขชื่อ">✎</button>
+          <button class="btn-icon btn-del" data-action="delete" data-id="${p.id}" title="ลบจุดนี้" aria-label="ลบจุดนี้">✕</button>
+        </div>
       </div>
       <div class="ring-wrap">
         <svg class="ring" viewBox="0 0 168 168">
@@ -620,7 +724,6 @@
 
     const now = Date.now();
     let remaining, total, ringColor, phaseText, statusText = "";
-    let visualState = p.state;
 
     if(p.state === "phase1"){
       remaining = Math.max(0, p.endTime - now);
@@ -642,41 +745,40 @@
         if(!p.alertPlaying){
           p.alertPlaying = true;
           playAlertPulse();
+          notifyAlert(p.name);
         }
       } else {
         el.classList.remove("alerting");
         p.alertPlaying = false;
       }
-    } else {
-      // idle (possibly showing "ready" flash)
+    } else if(p.state === "grace"){
+      remaining = Math.max(0, p.endTime - now);
+      total = GRACE_DURATION;
+      ringColor = "var(--ready)";
+      phaseText = "หุ่นเกิดแล้ว!";
+      statusText = "กำลังเริ่มคูลดาวน์รอบใหม่อัตโนมัติ";
       el.classList.remove("alerting");
       p.alertPlaying = false;
-      if(p.readyUntil !== null && now < p.readyUntil){
-        visualState = "ready";
-        remaining = 0;
-        total = 1;
-        ringColor = "var(--ready)";
-        phaseText = "หุ่นเกิดแล้ว!";
-        statusText = "พร้อมจก — กดเริ่มจับเวลาใหม่ตอนจกเสร็จ";
-      } else {
-        visualState = "idle";
-        remaining = PHASE1_DURATION;
-        total = PHASE1_DURATION;
-        ringColor = "var(--muted-2)";
-        phaseText = "รอเริ่ม";
-        statusText = "กดเริ่มจับเวลาทันทีที่จก Bolter เสร็จ";
-      }
+    } else {
+      // idle — never started, or manually reset
+      remaining = PHASE1_DURATION;
+      total = PHASE1_DURATION;
+      ringColor = "var(--muted-2)";
+      phaseText = "รอเริ่ม";
+      statusText = "กดเริ่มจับเวลาทันทีที่จก Bolter เสร็จ";
+      el.classList.remove("alerting");
+      p.alertPlaying = false;
     }
 
-    el.dataset.state = visualState;
-    digitsEl.textContent = (p.state === "idle" && visualState === "ready") ? "00:00" : fmt(remaining);
+    el.dataset.state = p.state;
+    digitsEl.textContent = fmt(remaining);
     phaseLabelEl.textContent = phaseText;
     statusEl.textContent = statusText;
 
     const frac = total > 0 ? Math.min(1, Math.max(0, remaining / total)) : 0;
-    const offset = visualState === "idle" ? CIRC : CIRC * (1 - frac);
+    const offset = p.state === "idle" ? CIRC : CIRC * (1 - frac);
     ringEl.style.stroke = ringColor;
-    ringEl.style.strokeDashoffset = (visualState === "ready") ? 0 : offset;
+    ringEl.style.strokeDashoffset = offset;
 
     // Actions
     if(p.state === "idle"){
@@ -695,12 +797,14 @@
     if(action === "start") startPoint(id);
     else if(action === "reset") resetPoint(id);
     else if(action === "delete") deletePoint(id);
+    else if(action === "edit") startEditName(id);
   });
 
   addBtn.addEventListener("click", () => {
     const name = nameInput.value.trim();
     if(!name) { nameInput.focus(); return; }
     ensureAudio();
+    ensureNotifyPermission();
     addPoint(name);
     nameInput.value = "";
     nameInput.focus();
@@ -709,17 +813,38 @@
     if(e.key === "Enter") addBtn.click();
   });
 
+  // ---------- Tab title countdown ----------
+  function updateTabTitle(){
+    const now = Date.now();
+    let soonest = null;
+    points.forEach(p => {
+      if((p.state === "phase1" || p.state === "phase2" || p.state === "grace") && p.endTime !== null){
+        const remaining = p.endTime - now;
+        if(soonest === null || remaining < soonest.remaining){
+          soonest = { remaining, name: p.name };
+        }
+      }
+    });
+    if(soonest === null){
+      document.title = DEFAULT_TITLE;
+    } else {
+      document.title = `${fmt(Math.max(0, soonest.remaining))} · ${soonest.name}`;
+    }
+  }
+
   // ---------- Main loop ----------
   function tick(){
     let needSave = false;
-    points.forEach(p => { if(syncPoint(p)) needSave = true; });
+    points.forEach(p => { while(syncPoint(p)){ needSave = true; } });
     if(needSave) save();
     render();
+    updateTabTitle();
   }
 
   load();
-  points.forEach(syncPoint);
+  points.forEach(p => { while(syncPoint(p)){} });
   render();
+  updateTabTitle();
   setInterval(tick, 1000);
 
 })();
