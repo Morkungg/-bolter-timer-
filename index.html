@@ -142,6 +142,77 @@
     box-shadow: 0 0 0 3px var(--p1-glow);
   }
 
+  .duration-field{
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0 10px;
+    flex: 0 0 auto;
+  }
+  .duration-field label{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .duration-field input[type="number"]{
+    width: 40px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-align:center;
+    padding: 12px 2px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .duration-field input[type="number"]::-webkit-outer-spin-button,
+  .duration-field input[type="number"]::-webkit-inner-spin-button{
+    -webkit-appearance: none; margin:0;
+  }
+  .duration-field input[type="number"]:focus{ border-bottom-color: var(--p1); }
+  .duration-field .colon{ color: var(--muted-2); font-family: var(--font-mono); font-size: 13px; }
+
+  .duration-row{
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .duration-row .btn-icon{
+    width: 20px; height: 20px;
+    font-size: 10px;
+  }
+  .duration-edit-inline{
+    display:flex;
+    align-items:center;
+    gap: 4px;
+  }
+  .duration-edit-inline input[type="number"]{
+    width: 32px;
+    background: var(--bg);
+    border: 1px solid var(--p1);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align:center;
+    padding: 2px 1px;
+    border-radius: 3px;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .duration-edit-inline input[type="number"]::-webkit-outer-spin-button,
+  .duration-edit-inline input[type="number"]::-webkit-inner-spin-button{
+    -webkit-appearance: none; margin:0;
+  }
+  .duration-edit-inline .colon{ color: var(--muted-2); font-size: 11px; }
+
   .btn-add{
     background: var(--p1);
     color: #06110e;
@@ -255,7 +326,42 @@
     color: var(--muted);
     font-family: var(--font-mono);
     margin-top: 4px;
+    display:flex;
+    align-items:center;
+    gap: 5px;
+    flex-wrap: wrap;
   }
+  .mini-edit, .mini-confirm{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    width: 18px; height: 18px;
+    border-radius: 3px;
+    cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size: 10px;
+    line-height:1;
+    padding:0;
+    flex-shrink:0;
+  }
+  .mini-edit:hover{ border-color: var(--p1); color: var(--p1); }
+  .mini-confirm{ border-color: var(--p1); color: var(--p1); }
+  .mini-confirm:hover{ background: var(--p1-glow); }
+  .dur-input{
+    width: 30px;
+    background: var(--bg);
+    border: 1px solid var(--p1);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-align:center;
+    padding: 2px 0;
+    border-radius: 3px;
+    outline:none;
+    -moz-appearance: textfield;
+  }
+  .dur-input::-webkit-outer-spin-button,
+  .dur-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
   .card-top-actions{
     display:flex;
@@ -527,10 +633,73 @@
     color: var(--muted-2);
     letter-spacing: 1px;
   }
+
+  /* Toast pop-up notifications, top-right */
+  .toast-container{
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 200;
+    display:flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: min(320px, calc(100vw - 36px));
+    pointer-events: none;
+  }
+  .toast{
+    pointer-events: auto;
+    background: linear-gradient(160deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--alert);
+    border-left: 4px solid var(--alert);
+    border-radius: 6px;
+    padding: 12px 12px 12px 14px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.45), 0 0 18px rgba(255,225,77,0.18);
+    display:flex;
+    align-items:flex-start;
+    gap: 10px;
+    animation: toastIn .3s ease-out;
+  }
+  .toast.leaving{ animation: toastOut .22s ease-in forwards; }
+  @keyframes toastIn{
+    from{ transform: translateX(120%); opacity:0; }
+    to{ transform: translateX(0); opacity:1; }
+  }
+  @keyframes toastOut{
+    from{ transform: translateX(0); opacity:1; }
+    to{ transform: translateX(120%); opacity:0; }
+  }
+  .toast-icon{ font-size:18px; line-height:1; flex-shrink:0; margin-top:1px; }
+  .toast-body{ flex:1; min-width:0; }
+  .toast-title{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:13px;
+    color: var(--alert);
+    margin-bottom:2px;
+  }
+  .toast-msg{
+    font-family: var(--font-mono);
+    font-size:11.5px;
+    color: var(--text);
+    line-height:1.5;
+    word-break: break-word;
+  }
+  .toast-close{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+    flex-shrink:0;
+    padding:2px;
+  }
+  .toast-close:hover{ color:var(--alert-2); }
 </style>
 </head>
 <body>
 <div class="scanline-overlay"></div>
+<div class="toast-container" id="toastContainer"></div>
 <div class="wrap">
 
   <header class="top">
@@ -543,6 +712,12 @@
 
   <div class="add-bar">
     <input type="text" id="pointNameInput" placeholder="พิมพ์ชื่อจุด เช่น Bolter จุด 1..." maxlength="40" />
+    <div class="duration-field">
+      <label for="phase2MinInput">รอเกิด</label>
+      <input type="number" id="phase2MinInput" min="0" max="59" value="8" />
+      <span class="colon">:</span>
+      <input type="number" id="phase2SecInput" min="0" max="59" value="30" />
+    </div>
     <button class="btn-add" id="addPointBtn">+ เพิ่มจุด</button>
   </div>
 
@@ -575,11 +750,14 @@
 
   const grid = document.getElementById("pointsGrid");
   const nameInput = document.getElementById("pointNameInput");
+  const phase2MinInput = document.getElementById("phase2MinInput");
+  const phase2SecInput = document.getElementById("phase2SecInput");
   const addBtn = document.getElementById("addPointBtn");
   const modal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImage");
   const modalTitle = document.getElementById("modalTitle");
   const closeModalBtn = document.getElementById("closeModalBtn");
+  const toastContainer = document.getElementById("toastContainer");
   const DEFAULT_TITLE = document.title;
 
   let points = [];
@@ -723,6 +901,34 @@
     beep(880, 140, 0.18);
   }
 
+  // ---------- In-page toast pop-up (top-right) ----------
+  function showToast(pointName){
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = `
+      <div class="toast-icon">⚠️</div>
+      <div class="toast-body">
+        <div class="toast-title">ใกล้ถึงรอบแล้ว!</div>
+        <div class="toast-msg">${escapeHtml(pointName)} — เหลือ 30 วินาที ไปรอจุดจกได้เลย</div>
+      </div>
+      <button class="toast-close" title="ปิด" aria-label="ปิดการแจ้งเตือน">✕</button>
+    `;
+    toastContainer.appendChild(toast);
+
+    let removed = false;
+    function removeToast(){
+      if(removed) return;
+      removed = true;
+      toast.classList.add("leaving");
+      setTimeout(() => toast.remove(), 220);
+    }
+    const timer = setTimeout(removeToast, 8000);
+    toast.querySelector(".toast-close").addEventListener("click", () => {
+      clearTimeout(timer);
+      removeToast();
+    });
+  }
+
   function save(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(points)); }catch(e){}
   }
@@ -757,11 +963,12 @@
     return "id-" + Date.now() + "-" + Math.random().toString(16).slice(2);
   }
 
-  function addPoint(name){
+  function addPoint(name, phase2Duration){
     points.push({
       id: uid(),
       name: name,
       hasImage: false,
+      phase2Duration: phase2Duration || PHASE2_DURATION,
       state: "idle",
       endTime: null,
       alertPlaying: false
@@ -865,7 +1072,7 @@
 
     if(p.state === "phase1" && p.endTime !== null && now >= p.endTime){
       p.state = "phase2";
-      p.endTime = p.endTime + PHASE2_DURATION;
+      p.endTime = p.endTime + (p.phase2Duration || PHASE2_DURATION);
       p.alertPlaying = false;
       changed = true;
     }
@@ -919,6 +1126,94 @@
          </div>`;
   }
 
+  function fmtMinSec(ms){
+    const totalSec = Math.round(ms / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+
+  function durationRowHtml(p){
+    const dur = p.phase2Duration || PHASE2_DURATION;
+    return `<div class="duration-row" data-role="durationRow">
+      <span data-role="durationLabel">รอเกิด ${fmtMinSec(dur)}</span>
+      <button class="btn-icon" data-action="edit-duration" data-id="${p.id}" title="แก้ไขเวลารอเกิด" aria-label="แก้ไขเวลารอเกิด">✎</button>
+    </div>`;
+  }
+
+  function setPointDuration(id, ms){
+    const p = points.find(x => x.id === id);
+    if(!p) return;
+    p.phase2Duration = ms;
+    save();
+    const el = grid.querySelector(`.card[data-id="${id}"]`);
+    if(el){
+      const row = el.querySelector('[data-role="durationRow"]');
+      if(row) row.outerHTML = durationRowHtml(p);
+    }
+  }
+
+  function commitDurationEdit(id){
+    const el = grid.querySelector(`.card[data-id="${id}"]`);
+    if(!el) return;
+    const row = el.querySelector('[data-role="durationRow"]');
+    if(!row) return;
+    const minInput = row.querySelector('[data-role="durMin"]');
+    const secInput = row.querySelector('[data-role="durSec"]');
+    if(!minInput || !secInput) return; // already committed (row was replaced)
+    const p = points.find(x => x.id === id);
+    const fallback = (p && p.phase2Duration) || PHASE2_DURATION;
+    let m = parseInt(minInput.value, 10); if(isNaN(m) || m < 0) m = 0;
+    let s = parseInt(secInput.value, 10); if(isNaN(s) || s < 0) s = 0;
+    let ms = (m * 60 + s) * 1000;
+    if(ms < 1000) ms = fallback; // guard against 0:00 typo
+    setPointDuration(id, ms);
+  }
+
+  function cancelDurationEdit(id){
+    const el = grid.querySelector(`.card[data-id="${id}"]`);
+    if(!el) return;
+    const row = el.querySelector('[data-role="durationRow"]');
+    if(!row) return;
+    const p = points.find(x => x.id === id);
+    if(!p) return;
+    row.outerHTML = durationRowHtml(p);
+  }
+
+  function startEditDuration(id){
+    const el = grid.querySelector(`.card[data-id="${id}"]`);
+    if(!el) return;
+    const row = el.querySelector('[data-role="durationRow"]');
+    if(!row) return;
+    const p = points.find(x => x.id === id);
+    if(!p) return;
+    const dur = p.phase2Duration || PHASE2_DURATION;
+    const curMin = Math.floor(dur / 60000);
+    const curSec = Math.floor((dur % 60000) / 1000);
+
+    row.innerHTML = `
+      <input type="number" class="dur-input" data-role="durMin" min="0" max="59" value="${curMin}" />
+      <span class="colon">:</span>
+      <input type="number" class="dur-input" data-role="durSec" min="0" max="59" value="${curSec}" />
+      <button class="mini-confirm" data-action="save-duration" data-id="${id}" title="บันทึก">✓</button>
+    `;
+    const minInput = row.querySelector('[data-role="durMin"]');
+    minInput.focus();
+    minInput.select();
+
+    row.querySelectorAll(".dur-input").forEach(inp => {
+      inp.addEventListener("keydown", (e) => {
+        if(e.key === "Enter"){ e.preventDefault(); commitDurationEdit(id); }
+        else if(e.key === "Escape"){ e.preventDefault(); cancelDurationEdit(id); }
+      });
+    });
+    row.addEventListener("focusout", () => {
+      setTimeout(() => {
+        if(!row.contains(document.activeElement)) commitDurationEdit(id);
+      }, 0);
+    });
+  }
+
   function cardTemplate(p){
     const isEditing = p.id === editingId;
     const titleHtml = isEditing
@@ -931,7 +1226,7 @@
       <div class="card-top">
         <div style="flex:1; min-width:0;">
           ${titleHtml}
-          <div class="point-config">วนลูปอัตโนมัติ</div>
+          ${durationRowHtml(p)}
         </div>
         <div class="card-top-actions">
           <button class="btn-icon btn-edit" data-action="edit" data-id="${p.id}" title="แก้ไขชื่อ">✎</button>
@@ -1029,7 +1324,7 @@
       el.classList.remove("alerting");
     } else if(p.state === "phase2"){
       remaining = Math.max(0, p.endTime - now);
-      total = PHASE2_DURATION;
+      total = p.phase2Duration || PHASE2_DURATION;
       const inAlert = remaining <= ALERT_THRESHOLD;
       ringColor = inAlert ? "var(--alert)" : "var(--p2)";
       phaseText = "เฟส 2 · สแตนด์บาย";
@@ -1041,6 +1336,7 @@
           p.alertPlaying = true;
           playAlertPulse();
           notifyAlert(p.name);
+          showToast(p.name);
         }
       } else {
         el.classList.remove("alerting");
@@ -1071,10 +1367,10 @@
     } else {
       actionsEl.innerHTML = `
         <div class="time-adjust-bar">
-          <button class="btn-adj" data-action="adjust" data-ms="-60000" data-id="${p.id}" title="ลด 1 นาที">-1m</button>
           <button class="btn-adj" data-action="adjust" data-ms="-30000" data-id="${p.id}" title="ลด 30 วิ">-30s</button>
+          <button class="btn-adj" data-action="adjust" data-ms="-10000" data-id="${p.id}" title="ลด 10 วิ">-10s</button>
+          <button class="btn-adj" data-action="adjust" data-ms="10000" data-id="${p.id}" title="เพิ่ม 10 วิ">+10s</button>
           <button class="btn-adj" data-action="adjust" data-ms="30000" data-id="${p.id}" title="เพิ่ม 30 วิ">+30s</button>
-          <button class="btn-adj" data-action="adjust" data-ms="60000" data-id="${p.id}" title="เพิ่ม 1 นาที">+1m</button>
         </div>
         <button class="btn btn-reset" data-action="reset" data-id="${p.id}">หยุด / รีเซ็ต</button>
       `;
@@ -1124,6 +1420,8 @@
     else if(action === "reset") resetPoint(id);
     else if(action === "delete") deletePoint(id);
     else if(action === "edit") startEditName(id);
+    else if(action === "edit-duration") startEditDuration(id);
+    else if(action === "save-duration") commitDurationEdit(id);
     else if(action === "showimage") showImageModal(id);
     else if(action === "adjust"){
       const ms = parseInt(btn.dataset.ms, 10);
@@ -1134,9 +1432,15 @@
   addBtn.addEventListener("click", () => {
     const name = nameInput.value.trim();
     if(!name) { nameInput.focus(); return; }
+    let mins = parseInt(phase2MinInput.value, 10);
+    let secs = parseInt(phase2SecInput.value, 10);
+    if(isNaN(mins) || mins < 0) mins = 0;
+    if(isNaN(secs) || secs < 0) secs = 0;
+    let phase2Ms = (mins * 60 + secs) * 1000;
+    if(phase2Ms < 1000) phase2Ms = PHASE2_DURATION; // guard against 0:00 typo
     ensureAudio();
     ensureNotifyPermission();
-    addPoint(name);
+    addPoint(name, phase2Ms);
     nameInput.value = "";
     nameInput.focus();
   });
